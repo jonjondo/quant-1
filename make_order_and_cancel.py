@@ -83,9 +83,9 @@ def make_order_and_cancel(api_svr_ip, api_svr_port, unlock_password, test_code, 
         else:
             if len(bid_order_arr) == 0:
                 continue
-            # 美股下单： 价格定为一档降5%
+            # 美股下单： 价格定为一档降10%
             price, _, _ = bid_order_arr[0]
-            price = round(price * 0.9, 2)
+            price = round(price * 0.94, 2)
 
         qty = lot_size
 
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     API_SVR_IP = '192.168.1.31'
     API_SVR_PORT = 11111
     UNLOCK_PASSWORD = "851226"
-    TEST_CODE = 'US.SRNE'  # 'US.BABA' 'HK.00700'
-    TRADE_ENV = 0
+    TEST_CODE = 'HK.23936'  # 'US.BABA' 'HK.00700'
+    TRADE_ENV = 1
 
     make_order_and_cancel(API_SVR_IP, API_SVR_PORT, UNLOCK_PASSWORD, TEST_CODE, TRADE_ENV)
