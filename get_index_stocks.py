@@ -1032,24 +1032,26 @@ def get_index_stocks(ip, port, strcode):
     return ret, data_frame
 
 if __name__ == "__main__":
-    api_ip = '192.168.1.31' #''119.29.141.202'这里要使用本地客户端
+    api_ip = 'localhost' #''119.29.141.202'这里要使用本地客户端
     api_port = 11111
 
-    # enum_all_index(api_ip, api_port)
+    enum_all_index(api_ip, api_port)
 
-    print('SH.000001 上证指数 \n')
-    print(get_index_stocks(api_ip, api_port, 'SH.000001'))
+    #print('SH.000001 上证指数 \n')
+    #print(get_index_stocks(api_ip, api_port, 'SH.000001'))
 
-    print('SZ.399006 创业板指\n')
-    print(get_index_stocks(api_ip, api_port, 'SZ.399006'))
+   # print('SZ.399006 创业板指\n')
+    #print(get_index_stocks(api_ip, api_port, 'SZ.399006'))
 
-    print('HK.800000 恒生指数 \n')
-    print(get_index_stocks(api_ip, api_port, 'HK.800000'))
+    #print('HK.800000 恒生指数 \n')
+    #print(get_index_stocks(api_ip, api_port, 'HK.800000'))
 
-    print('US..DJI 道琼斯指数\n')
-    print(get_index_stocks(api_ip, api_port, 'US..DJI'))
+    #print('US..DJI 道琼斯指数\n')
+    #print(get_index_stocks(api_ip, api_port, 'US..DJI'))
 
-
+    print('沪深300 指数\n')
+    ret, data_frame =get_index_stocks(api_ip,api_port,'SZ.399300')
+    data_frame.to_csv("index_hs300.txt", index=True, sep=' ', columns=['code', 'stock_name'])
 
 
 
