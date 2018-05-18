@@ -1032,7 +1032,7 @@ def get_index_stocks(ip, port, strcode):
     return ret, data_frame
 
 if __name__ == "__main__":
-    api_ip = '192.168.1.31' #''119.29.141.202'
+    api_ip = '192.168.1.31' #''119.29.141.202'这里要使用本地客户端
     api_port = 11111
 
     # enum_all_index(api_ip, api_port)
