@@ -1007,19 +1007,19 @@ def enum_all_index(ip, port):
     quote_ctx = OpenQuoteContext(ip, port)
 
     ret, data_frame = quote_ctx.get_stock_basicinfo(market='SH', stock_type='IDX')
-    data_frame.to_csv("index_sh.txt", index=True, sep=' ', columns=['code', 'name'])
+    data_frame.to_csv("data/index_sh.txt", index=True, sep=' ', columns=['code', 'name'])
     print('market SH index data saved!')
 
     ret, data_frame = quote_ctx.get_stock_basicinfo(market='SZ', stock_type='IDX')
-    data_frame.to_csv("index_sz.txt", index=True, sep=' ', columns=['code', 'name'])
+    data_frame.to_csv("data/index_sz.txt", index=True, sep=' ', columns=['code', 'name'])
     print('market SZ index data saved!')
 
     ret, data_frame = quote_ctx.get_stock_basicinfo(market='HK', stock_type='IDX')
-    data_frame.to_csv("index_hk.txt", index=True, sep=' ', columns=['code', 'name'])
+    data_frame.to_csv("data/index_hk.txt", index=True, sep=' ', columns=['code', 'name'])
     print('market HK index data saved!')
 
     ret, data_frame = quote_ctx.get_stock_basicinfo(market='US', stock_type='IDX')
-    data_frame.to_csv("index_us.txt", index=True, sep=' ', columns=['code', 'name'])
+    data_frame.to_csv("data/index_us.txt", index=True, sep=' ', columns=['code', 'name'])
     print('market US index data saved!')
 
     quote_ctx.close()
@@ -1037,21 +1037,21 @@ if __name__ == "__main__":
 
     enum_all_index(api_ip, api_port)
 
-    #print('SH.000001 上证指数 \n')
-    #print(get_index_stocks(api_ip, api_port, 'SH.000001'))
+    print('SH.000001 上证指数 \n')
+    print(get_index_stocks(api_ip, api_port, 'SH.000001'))
 
-   # print('SZ.399006 创业板指\n')
-    #print(get_index_stocks(api_ip, api_port, 'SZ.399006'))
+    print('SZ.399006 创业板指\n')
+    print(get_index_stocks(api_ip, api_port, 'SZ.399006'))
 
-    #print('HK.800000 恒生指数 \n')
-    #print(get_index_stocks(api_ip, api_port, 'HK.800000'))
+    print('HK.800000 恒生指数 \n')
+    print(get_index_stocks(api_ip, api_port, 'HK.800000'))
 
-    #print('US..DJI 道琼斯指数\n')
-    #print(get_index_stocks(api_ip, api_port, 'US..DJI'))
+    print('US..DJI 道琼斯指数\n')
+    print(get_index_stocks(api_ip, api_port, 'US..DJI'))
 
     print('沪深300 指数\n')
     ret, data_frame =get_index_stocks(api_ip,api_port,'SZ.399300')
-    data_frame.to_csv("index_hs300.txt", index=True, sep=' ', columns=['code', 'stock_name'])
+    data_frame.to_csv("data/index_hs300.txt", index=True, sep=' ', columns=['code', 'stock_name'])
 
 
 

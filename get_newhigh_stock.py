@@ -320,7 +320,7 @@ if __name__ == "__main__":
     #draw_single_stock_MACD('HK.00700')
     #loop_all_hk_stocks_from_file("HSIIndexList.csv",60)
     wgs=WhiteGuardStock()
-    wgs.init_cn_stock("stocklist.csv")
+    wgs.init_cn_stock("data/stocklist.csv")
     wgs.loop_all_cn_stocks('futu',30)
     #loop_all_stocks('HK.800000')
     #get_stock_kdj_buy_signal('HK.03883',30)

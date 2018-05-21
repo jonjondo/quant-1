@@ -72,22 +72,145 @@ def is_break_high(stockID,days):
         return False
 
 
+def get_basic_detail_by_history(info_type,start_year,end_year):
+    if info_type == 1:
+        print("---------获取业绩报告主表----------\n")
+        for i in range(start_year,end_year):
+            for j in range(4):
+                year = i
+                quater = j+1
+                try:
+                    df = ts.get_report_data(year,quater)
+                    if not df.empty:
+                        ret_file_name = "data/hsbasic/沪深股票业绩报告主表"+str(year)+"q"+str(quater)+".csv"
+                        df.to_csv(ret_file_name, index=True, sep=',')
+                        print("file %s saved" %ret_file_name)
+                except Exception as e:
+                    print("报告主表发生错误%s"%e.messagme)
+                    break;
+    elif info_type == 2:
+        print("---------获取盈利能力----------\n")
+        for i in range(start_year,end_year):
+            for j in range(4):
+                year = i
+                quater = j+1
+                try:
+                    df = ts.get_profit_data(year,quater)
+                    if not df.empty:
+                        ret_file_name = "data/hsbasic/沪深股票盈利能力"+str(year)+"q"+str(quater)+".csv"
+                        df.to_csv(ret_file_name, index=True, sep=',')
+                        print("file %s saved" %ret_file_name)
+                except Exception as e:
+                    print("盈利能力发生错误%s"%e.messagme)
+                    break;
+    elif info_type == 3:
+        print("---------获取营运能力----------\n")
+        for i in range(start_year,end_year):
+            for j in range(4):
+                year = i
+                quater = j+1
+                try:
+                    df = ts.get_operation_data(year,quater)
+                    if not df.empty:
+                        ret_file_name = "data/hsbasic/沪深股票营运能力"+str(year)+"q"+str(quater)+".csv"
+                        df.to_csv(ret_file_name, index=True, sep=',')
+                        print("file %s saved" %ret_file_name)
+                except Exception as e:
+                    print("营运能力发生错误%s"%e.messagme)
+                    break;
+    elif info_type == 4:
+        print("---------获取成长能力----------\n")
+        for i in range(start_year,end_year):
+            for j in range(4):
+                year = i
+                quater = j+1
+                try:
+                    df = ts.get_growth_data(year,quater)
+                    if not df.empty:
+                        ret_file_name = "data/hsbasic/沪深股票成长能力"+str(year)+"q"+str(quater)+".csv"
+                        df.to_csv(ret_file_name, index=True, sep=',')
+                        print("file %s saved" %ret_file_name)
+                except Exception as e:
+                    print("成长能力发生错误%s"%e.messagme)
+                    break;
+    elif info_type == 5:
+        print("---------获取偿债能力----------\n")
+        for i in range(start_year,end_year):
+            for j in range(4):
+                year = i
+                quater = j+1
+                try:
+                    df = ts.get_debtpaying_data(year,quater)
+                    if not df.empty:
+                        ret_file_name = "data/hsbasic/沪深股票偿债能力"+str(year)+"q"+str(quater)+".csv"
+                        df.to_csv(ret_file_name, index=True, sep=',')
+                        print("file %s saved" %ret_file_name)
+                except Exception as e:
+                    print("偿债能力发生错误%s"%e.messagme)
+                    break;
+    elif info_type == 6:
+        print("---------获取现金流量----------\n")
+        for i in range(start_year,end_year):
+            for j in range(4):
+                year = i
+                quater = j+1
+                try:
+                    df = ts.get_cashflow_data(year,quater)
+                    if not df.empty:
+                        ret_file_name = "data/hsbasic/沪深股票现金流量"+str(year)+"q"+str(quater)+".csv"
+                        df.to_csv(ret_file_name, index=True, sep=',')
+                        print("file %s saved" %ret_file_name)
+                except Exception as e:
+                    print("偿债能力发生错误%s"%e.messagme)
+                    break;
 
 
+def get_basic_detail_by_quater(year,quater):
+    df = ts.get_report_data(year,quater)
+    ret_file_name = "data/hsbasic/沪深股票业绩报告主表"+str(year)+"q"+str(quater)+".csv"
+    df.to_csv(ret_file_name, index=True, sep=',')
+    print("file %s saved" %ret_file_name)
+
+    df = ts.get_profit_data(year,quater)
+    ret_file_name = "data/hsbasic/沪深股票盈利能力"+str(year)+"q"+str(quater)+".csv"
+    df.to_csv(ret_file_name, index=True, sep=',')
+    print("file %s saved" %ret_file_name)
+
+    df = ts.get_operation_data(year,quater)
+    ret_file_name = "data/hsbasic/沪深股票营运能力"+str(year)+"q"+str(quater)+".csv"
+    df.to_csv(ret_file_name, index=True, sep=',')
+    print("file %s saved" %ret_file_name)
+
+    df = ts.get_growth_data(year,quater)
+    ret_file_name = "data/hsbasic/沪深股票成长能力"+str(year)+"q"+str(quater)+".csv"
+    df.to_csv(ret_file_name, index=True, sep=',')
+    print("file %s saved" %ret_file_name)
+
+    df = ts.get_debtpaying_data(year,quater)
+    ret_file_name = "data/hsbasic/沪深股票偿债能力"+str(year)+"q"+str(quater)+".csv"
+    df.to_csv(ret_file_name, index=True, sep=',')
+    print("file %s saved" %ret_file_name)
 
 
-
-
-
-
-
+    df = ts.get_cashflow_data(year,quater)
+    ret_file_name = "data/hsbasic/沪深股票现金流量"+str(year)+"q"+str(quater)+".csv"
+    df.to_csv(ret_file_name, index=True, sep=',')
+    print("file %s saved" %ret_file_name)
 
 
 
 
 if __name__ == "__main__":
-   #draw_single_stock_MA('002273')
-   #get_all_stock_id()
-   #ts.get_hs300s()
-   #ts.get_industry_classified()
-   loop_all_stocks()
+    #draw_single_stock_MA('002273')
+    #get_all_stock_id()
+    #ts.get_hs300s()
+    #ts.get_industry_classified()
+    #loop_all_stocks()
+    #df = ts.get_stock_basics()
+    #df.to_csv("data/hsbasic/stocklistbasic.csv", index=True, sep=',')
+    #for i in range(6):
+    #get_basic_detail_by_history(i+1,2018,2019)
+    get_basic_detail_by_quater(2018,1)
+
+
+
