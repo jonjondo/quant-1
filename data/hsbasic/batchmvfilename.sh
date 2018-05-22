@@ -9,7 +9,8 @@ do
     # 拼接成文件名
 		filename=$2$bname
 		# 更改文件名
-		echo "mv" $files $filename ${#bname}
-		#mv $files $filename
+		echo "mv" $files $filename
+		cp $files bak/
+		mv $files $filename
 	fi
 done
