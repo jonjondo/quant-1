@@ -7,30 +7,38 @@ path='data/hsbasic/'
 def get_total_report(report_type,out_file_name):
     try:
         df_basic = pb.read_csv(os.path.join(path,"stocklistbasic.csv"))
+        df_basic['code'].astype('str')
+        df_basic = df_basic.drop_duplicates(['code'])
         for filename in os.listdir(path):
             if report_type in filename:
                 print("Processing file %s" %os.path.join(path,filename))
                 with open(os.path.join(path,filename), 'rb') as f:
                     result = chardet.detect(f.read())
                 df = pb.read_csv(os.path.join(path,filename),encoding=result['encoding'])
+                df['code'].astype('str')
                 for i in range(3,df.columns.size):
                     #df.columns.values[i]=df.columns.values[i] + '_' +filename[-10:-4]
                     df = df.rename(columns={df.columns.values[i]: df.columns.values[i] + '_' +filename[-10:-4]})
                 #print(df.columns.values.tolist())
+                df = df.drop_duplicates(['code'])
                 #print(df)
                 df_basic = pb.merge(df_basic,df,on='code')
-        df_basic = df_basic.drop_duplicates(['code'])
+        #df_basic = df_basic.drop_duplicates(['code'])
         df_basic.to_csv(os.path.join(path,out_file_name))
         print("file %s saved!"%os.path.join(path,out_file_name))
     except Exception as e:
         print(e.message)
 if __name__ == "__main__":
-    get_total_report('cashflow','total_cn_stock_cash_flow.csv')
-    get_total_report('benefitability','total_cn_stock_benefit_ability.csv')
-    get_total_report('debtability','total_cn_stock_debt_ability.csv')
-    get_total_report('growthability','total_cn_stock_growth_ability.csv')
-    get_total_report('operationability','total_cn_stock_operation_ability.csv')
-    get_total_report('quaterreport','total_cn_stock_quater_report.csv')
+    #get_total_report('cashflow','total_cn_stock_cash_flow.csv')
+    #get_total_report('benefitability','total_cn_stock_benefit_ability.csv')
+    #get_total_report('debtability','total_cn_stock_debt_ability.csv')
+    #get_total_report('growthability','total_cn_stock_growth_ability.csv')
+    #get_total_report('operationability','total_cn_stock_operation_ability.csv')
+    #get_total_report('quaterreport','total_cn_stock_quater_report.csv')
+    df_basic = pb.read_csv(os.path.join(path,"stocklistbasic.csv"))
+    df_basic['code'].astype('str')
+    df_basic = df_basic.drop_duplicates(['code'])
+    df_basic.to_csv(os.path.join(path,"stocklistbasic_filter.csv"))
 
 
 
