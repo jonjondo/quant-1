@@ -12,6 +12,7 @@ colOutPutName = {
     'industry':'所属行业',
     'pe':'市盈率',
     'pb':'市静率',
+    'peg':'市盈率相对盈利增长比率',
     'timeToMarket'   : '上市时间',
     'business_income_good':'主营业务收入',
     'nprg_good'   : '净利润增长率',
@@ -143,6 +144,10 @@ def merge_canslim_c_result():
     df['roe_good'].astype('float')
     df['business_income_good'].astype('float')
     df['cashflowratio_good'].astype('float')
+    #在这里计算PEG市盈率相对盈利增长比率
+    df['peg'] = df['pe']/df['nprg_2017q4']
+    decimals = pb.Series([2], index=['peg'])
+    df.round(decimals)
     df = df.fillna(0)
     #value = (df['gross_profit_rate_good'] + df['profits_yoy_good'] + df['nprg_good'] + df['roe_good'] + df['cashflowratio_good'] >= 4)
     #print(df['gross_profit_rate_good'].values + df['profits_yoy_good'].values + df['nprg_good'].values + df['roe_good'].values + df['cashflowratio_good'].values)
@@ -154,7 +159,7 @@ def merge_canslim_c_result():
     df_high_growth = df
     df_high_profits = df
     #根据不同的倾向调整模型
-    df_high_growth['total_rate'] = df_high_growth['business_income_good']*1+ df_high_growth['roe_good']*2+ df_high_growth['gross_profit_rate_good']*1.5 + df_high_growth['profits_yoy_good']*0.5 + df_high_growth['nprg_good']*3  + df_high_growth['cashflowratio_good']*2
+    df_high_growth['total_rate'] = df_high_growth['business_income_good']*1.5+ df_high_growth['roe_good']*2.5+ df_high_growth['gross_profit_rate_good']*2 + df_high_growth['profits_yoy_good']*0.25 + df_high_growth['nprg_good']*3.25  + df_high_growth['cashflowratio_good']*1
     #df_high_growth.to_csv(os.path.join(path,"df_high_growth.csv"))
     df_high_growth= df_high_growth.sort_values(by=['total_rate'],ascending=False)
     df_high_growth = changeOutPutColName(df_high_growth)
@@ -170,9 +175,11 @@ def merge_canslim_c_result():
 
     #print(df)
     write = pb.ExcelWriter(os.path.join(path,"WhiteGuardSelection.xlsx"))
-    output_colum = ['股票代码','股票名称','所属行业','市盈率','市静率','上市时间','主营业务收入','净利润增长率','净利润率','毛利率增长','净资产收益率','现金流','综合评定']
-    df_high_growth[df_high_growth['综合评定'] >= 5].to_excel(write,sheet_name='优质增长标底',header=output_colum,columns=output_colum,index=False)
-    df_high_profits[df_high_profits['综合评定'] >= 5].to_excel(write,sheet_name='优质营收标底',header=output_colum,columns=output_colum,index=False)
+    output_colum = ['股票代码','股票名称','所属行业','市盈率','市静率','市盈率相对盈利增长比率','上市时间','主营业务收入','净利润增长率','净利润率','毛利率增长','净资产收益率','现金流','综合评定']
+    condtion_growth = (df_high_growth['综合评定'] >= 5) & (df_high_growth['市盈率相对盈利增长比率'] <= 2)
+    condtion_income = (df_high_profits['综合评定'] >= 5) & (df_high_profits['市盈率相对盈利增长比率'] <= 2)
+    df_high_growth[condtion_growth == True].to_excel(write,sheet_name='优质增长标底',header=output_colum,columns=output_colum,index=False,float_format = '%.2f')
+    df_high_profits[condtion_income == True].to_excel(write,sheet_name='优质营收标底',header=output_colum,columns=output_colum,index=False,float_format = '%.2f')
     write.save()
 if __name__ == "__main__":
     #calculate_profits_yoy_increase()
