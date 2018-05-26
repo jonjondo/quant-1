@@ -175,9 +175,9 @@ def merge_canslim_c_result():
 
     #print(df)
     write = pb.ExcelWriter(os.path.join(path,"WhiteGuardSelection.xlsx"))
-    output_colum = ['股票代码','股票名称','所属行业','市盈率','市静率','市盈率相对盈利增长比率','上市时间','主营业务收入','净利润增长率','净利润率','毛利率增长','净资产收益率','现金流','综合评定']
-    condtion_growth = (df_high_growth['综合评定'] >= 5) & (df_high_growth['市盈率相对盈利增长比率'] <= 2)
-    condtion_income = (df_high_profits['综合评定'] >= 5) & (df_high_profits['市盈率相对盈利增长比率'] <= 2)
+    output_colum = ['股票代码','股票名称','所属行业','市盈率','市盈率相对盈利增长比率','上市时间','主营业务收入','净利润增长率','净利润率','毛利率增长','净资产收益率','现金流','综合评定']
+    condtion_growth = (df_high_growth['综合评定'] >= 5) & (df_high_growth['市盈率相对盈利增长比率'] <= 2) & (df_high_growth['市盈率相对盈利增长比率'] >= 0)
+    condtion_income = (df_high_profits['综合评定'] >= 4) & (df_high_profits['市盈率相对盈利增长比率'] <= 2) & (df_high_profits['市盈率相对盈利增长比率'] >= 0)
     df_high_growth[condtion_growth == True].to_excel(write,sheet_name='优质增长标底',header=output_colum,columns=output_colum,index=False,float_format = '%.2f')
     df_high_profits[condtion_income == True].to_excel(write,sheet_name='优质营收标底',header=output_colum,columns=output_colum,index=False,float_format = '%.2f')
     write.save()
