@@ -7,14 +7,14 @@ import datetime
 import numpy as np
 import pandas as pb
 
-api_ip = '192.168.1.31'#'119.29.141.202'这里要使用本地客户端
+api_ip = '119.29.141.202'#'119.29.141.202'这里要使用本地客户端
 api_port = 11111
 
 class WhiteGuardStock:
     def __init__(self):
         self.quote_ctx = OpenQuoteContext(api_ip, api_port)
     def init_cn_stock(self,cn_stock_file_name):
-        self.cn_stock_list = pb.read_csv(cn_stock_file_name)
+        self.cn_stock_list = pb.read_csv(cn_stock_file_name,encoding='GBK')
     def init_hk_stock(self,hk_stock_file_name):
         self.hk_stock_list = pb.read_csv(hk_stock_file_name)
 
@@ -233,7 +233,7 @@ class WhiteGuardStock:
 
     def loop_all_cn_stocks(self,data_source,days):
         info = self.cn_stock_list
-        print("----------------------以下沪深300符合条件%s----------------------------"%(days))
+        print("----------------------以下符合条件%s----------------------------"%(days))
         for EachStockID in info.code:
             if data_source == 'tushare':
                 if self.is_cn_stock_break_high_from_tushare(EachStockID,days):
@@ -272,18 +272,17 @@ class WhiteGuardStock:
                 stock_data['KDJ_J'] = 3 * stock_data['KDJ_K'] - 2 * stock_data['KDJ_D']
                 # 计算KDJ指标金叉、死叉情况
                 stock_data['KDJ_金叉死叉'] = ''
-                kdj_position_gold = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_D'] < 25)
+                kdj_position_gold = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_K'] <= 25)|(stock_data['KDJ_J'] < 0)
                 kdj_position_die = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_D'] > 75 )
                 stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index, 'KDJ_金叉死叉'] = 1
                 stock_data.loc[kdj_position_die[(kdj_position_die == False) & (kdj_position_die.shift() == True)].index, 'KDJ_金叉死叉'] = -1
                 #stock_data.to_csv("00700KDJ.csv", index=True, sep=',')
                 if len(stock_data.index) > 3:
-                    #过去三天出了金叉,且过去五天有J无限接近底部，同时没有扭头向下的话，标为1.
-                    for pos in range(10):
-                        if (stock_data.iloc[-pos]['KDJ_金叉死叉'] == 1 ) and (stock_data.iloc[-1]['KDJ_J'] >= stock_data.iloc[-1]['KDJ_K']):
+                    #过去三天出了金叉,或过去五天有J无限接近底部,同时没有扭头向下的话，,标为1.
+                    for pos in range(7):
+                        if (stock_data.iloc[-pos]['KDJ_金叉死叉'] == 1)  and (stock_data.iloc[-1]['KDJ_J'] >= stock_data.iloc[-1]['KDJ_K']):
                             return  True
                         #(stock_data.iloc[-1]['KDJ_J'] < 1 or stock_data.iloc[-2]['KDJ_J'] < 1 or stock_data.iloc[-3]['KDJ_J'] < 1 or stock_data.iloc[-4]['KDJ_J'] < 1 or stock_data.iloc[-5]['KDJ_J'] < 1) and\
-
                         #print("股票%s 近三日内出现KDJ金叉"%(stock_id))
 
                     else:
@@ -306,21 +305,136 @@ class WhiteGuardStock:
                 df['MA20']=ta.SMA(closed,timeperiod=20)
             if len(df.index) > 20:
                     #这里写策略，穿越策略,如果五日线过去20个交易日有穿越十日线
-                    for pos in range(10):
+                    for pos in range(5):
                         if (df.iloc[-pos]['MA5'] - df.iloc[-pos]['MA10'] < 1)  and (df.iloc[-pos]['MA5'] - df.iloc[-pos]['MA10'] > 0) and (df.iloc[-pos-1]['MA5'] - df.iloc[-pos-1]['MA10'] < 0):
                             #print("%s 倒数第%s日 MA5:%s 穿越 MA10:%s"%(stock_id,pos,df.iloc[-pos]['MA5'],df.iloc[-pos]['MA10']))
                             return  True
+                        if pos >= len(df.index):
+                            return  False
                     return False
         except Exception as e:
-            print("错误：%s,返回结果%s"% (e,df))
+            print("错误：%s,返回结果%s in get_stock_ma_cross_signal"% (e,df))
 
+    def get_stock_dmi_ta_signal(self,stock_id,days):
+        SHORTMA = 5
+        LONGMA = 20
+        ADXPERIOD = 14
+
+        ret, df = self.quote_ctx.get_history_kline(stock_id, start='2018-01-01',end='2018-05-27', ktype='K_DAY', autype='qfq')  # 获取历史K线
+        if not df.empty:
+            high=df['high'].values
+            low=df['low'].values
+            close=df['close'].values
+            df['ADX'] = ta.ADX(high,low,close,ADXPERIOD)
+            df['ADXR'] = ta.ADXR(high,low,close,ADXPERIOD)
+            df['PLUS_DI'] = ta.PLUS_DI(high,low,close,ADXPERIOD)
+            df['MINUS_DI'] = ta.MINUS_DI(high,low,close,ADXPERIOD)
+            #df['ADX'] = ta.ADX(high,low,close,ADXPERIOD)
+            #df['ADXR'] = ta.ADXR(high,low,close,ADXPERIOD)
+            #df['AAJ'] = 3*df['ADX']-2*df['ADXR']
+            df['SHORTMA'] = ta.SMA(close,SHORTMA)
+            df['LONGMA'] = ta.SMA(close,LONGMA)
+            fig = plt.figure(figsize=[18,5])
+            #plt.plot(df.index,df['MACD'],label='macd dif')
+            #plt.plot(df.index,df['MACDsignal'],label='signal dea')
+            plt.plot(df.index,df['ADX'] ,label='ADX')
+            plt.plot(df.index,df['ADXR'] ,label='ADXR')
+            plt.plot(df.index,df['PLUS_DI'] ,label='PLUS_DI')
+            plt.plot(df.index,df['MINUS_DI'] ,label='MINUS_DI')
+            #plt.plot(df.index,df['SHORTMA'] ,label='SHORTMA')
+            #plt.plot(df.index,df['LONGMA'] ,label='LONGMA')
+            plt.plot(df.index,df['AAJ'] ,label='AAJ')
+
+            #plt.plot(df.index,df['my_MACD'],label='my dif')
+            #plt.plot(df.index,df['my_MACDsignal'],label='my dea')
+
+            plt.legend(loc='best')
+            #plt.plot(df)
+            plt.grid()
+            #记得加这一句，不然不会显示图像
+            plt.show()
+
+    def get_stock_dmi_my_signal(self,stock_id,days):
+        N,MM=14,6
+        observation_period=max(N,MM)*2
+        ret, df = self.quote_ctx.get_history_kline(stock_id, start='2017-11-28',end='2018-05-27', ktype='K_DAY', autype='qfq')  # 获取历史K线
+        if not df.empty:
+            high=df['high']
+            low=df['low']
+            close=df['close']
+            df=pd.DataFrame()
+            df['h-l']=high-low
+            df['h-c']=abs(high-close.shift(1))
+            df['l-c']=abs(close.shift(1)-low)
+            df['tr']=df.max(axis=1)
+
+            df['tr']=ta.EMA(df['tr'],N)
+            #EXPMEMA(MAX(MAX(HIGH-LOW,ABS(HIGH-REF(CLOSE,1))),ABS(REF(CLOSE,1)-LOW)),N);
+            df['PDM']=high-high.shift(1)
+            df['MDM']=low.shift(1)-low
+            df['DPD']=0
+            df['DMD']=0
+            for i in range(len(df.index)):
+                PDM=df.ix[i,'PDM']
+                MDM=df.ix[i,'MDM']
+                if PDM<0 or PDM<MDM:
+                    df.ix[i,'DPD']=0
+                else:
+                    df.ix[i,'DPD']=PDM
+                if MDM<0 or MDM<PDM:
+                    df.ix[i,'DMD']=0
+                else:
+                    df.ix[i,'DMD']=MDM
+            for i in range(N,len(df.index)):
+                #df.ix[i,'NTR']=sum(df.ix[i-N+1:i,'tr'])
+                #df.ix[i,'NPDM']=sum(df.ix[i-N+1:i,'DPD'])
+                #df.ix[i,'NMDM']=sum(df.ix[i-N+1:i,'DMD'])
+                df.ix[i,'NTR']=ta.EMA(df.ix[i-N+1:i,'tr'],N).values[-1]
+                df.ix[i,'NPDM']=ta.EMA(df.ix[i-N+1:i,'DPD'],N).values[-1]
+                df.ix[i,'NMDM']=ta.EMA(df.ix[i-N+1:i,'DMD'],N).values[-1]
+            df['PDI']=df['NPDM']/df['NTR']*100
+            df['MDI']=df['NMDM']/df['NTR']*100
+            print(df)
+            #df['DX']=abs(df['MDI']-df['PDI'])/(df['MDI']+df['PDI'])*100
+            #ADX0:=EMA((DMP-DMM)/(DMP+DMM)*100,M);
+            #ADXR0:=EMA(ADX0,M);
+            df['DX']=ta.EMA((df['NPDM']-df['NMDM'])/(df['NMDM']+df['NPDM'])*100,MM)
+            df['ADX']=df['DX']
+            df['ADXR']=ta.EMA(df['ADX'],MM)
+            df['AAJ'] = 3*df['ADX']-2*df['ADXR']
+            # for i in range(MM,len(df.index)):
+            #     summDX=0
+            #     summADX=0
+            #     for j in range(i-MM,i):
+            #         summDX+=df.ix[j,'DX']
+            #         summADX+=df.ix[j,'ADX']
+            #     df.ix[i,'ADX']=summDX/MM
+            #     summADX+=df.ix[j,'ADX']
+            #     df.ix[i,'ADXR']=summADX/MM
+            fig = plt.figure(figsize=[18,5])
+            #plt.plot(df.index,df['MACD'],label='macd dif')
+            #plt.plot(df.index,df['MACDsignal'],label='signal dea')
+           # plt.plot(df.index,df['ADX'] ,label='ADX')
+            #plt.plot(df.index,df['ADXR'] ,label='ADXR')
+            plt.plot(df.index,df['PDI'] ,label='PDI')
+            plt.plot(df.index,df['MDI'] ,label='MDI')
+            #plt.plot(df.index,df['SHORTMA'] ,label='SHORTMA')
+            #plt.plot(df.index,df['LONGMA'] ,label='LONGMA')
+            plt.plot(df.index,df['AAJ'] ,label='AAJ')
+            plt.legend(loc='best')
+            #plt.plot(df)
+            plt.grid()
+            #记得加这一句，不然不会显示图像
+            plt.show()
+        return df['PDI'],df['MDI'],df['ADX'],df['ADXR']
 
 
 if __name__ == "__main__":
     #draw_single_stock_MACD('HK.00700')
     #loop_all_hk_stocks_from_file("HSIIndexList.csv",60)
     wgs=WhiteGuardStock()
-    wgs.init_cn_stock("data/stocklist.csv")
-    wgs.loop_all_cn_stocks('futu',30)
+    #wgs.init_cn_stock("data/stocklist.csv")
+    #wgs.loop_all_cn_stocks('futu',30)
+    wgs.get_stock_dmi_my_signal('HK.00700',100)
     #loop_all_stocks('HK.800000')
     #get_stock_kdj_buy_signal('HK.03883',30)
