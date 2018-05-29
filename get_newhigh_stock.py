@@ -6,6 +6,7 @@ from futuquant.open_context import *
 import datetime
 import numpy as np
 import pandas as pb
+import matplotlib.dates as mdate
 
 api_ip = '119.29.141.202'#'119.29.141.202'这里要使用本地客户端
 api_port = 11111
@@ -22,7 +23,6 @@ class WhiteGuardStock:
 
 
 
-    #quote_ctx.get_history_kline(code, start=None, end=None, ktype='K_DAY', autype='qfq')  # 获取历史K线
     def draw_single_stock_MA(self,stock_id):
         #df=ts.get_k_data(stock_id,start='2018-01-01',end='2018-05-15')
         try:
@@ -356,19 +356,20 @@ class WhiteGuardStock:
 
     def get_stock_dmi_my_signal(self,stock_id,days):
         N,MM=14,6
-        observation_period=max(N,MM)*2
-        ret, df = self.quote_ctx.get_history_kline(stock_id, start='2017-11-28',end='2018-05-27', ktype='K_DAY', autype='qfq')  # 获取历史K线
+        start_day='2017-11-28'
+        end_day='2018-05-28'
+        ret, df = self.quote_ctx.get_history_kline(stock_id, start_day,end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
         if not df.empty:
             high=df['high']
             low=df['low']
             close=df['close']
-            df=pd.DataFrame()
+            df = pd.DataFrame()
             df['h-l']=high-low
             df['h-c']=abs(high-close.shift(1))
             df['l-c']=abs(close.shift(1)-low)
             df['tr']=df.max(axis=1)
 
-            df['tr']=ta.EMA(df['tr'],N)
+            #df['tr']=ta.EMA(df['tr'],N)
             #EXPMEMA(MAX(MAX(HIGH-LOW,ABS(HIGH-REF(CLOSE,1))),ABS(REF(CLOSE,1)-LOW)),N);
             df['PDM']=high-high.shift(1)
             df['MDM']=low.shift(1)-low
@@ -394,14 +395,16 @@ class WhiteGuardStock:
                 df.ix[i,'NMDM']=ta.EMA(df.ix[i-N+1:i,'DMD'],N).values[-1]
             df['PDI']=df['NPDM']/df['NTR']*100
             df['MDI']=df['NMDM']/df['NTR']*100
-            print(df)
+
+            #df.to_csv("dmi2.csv")
             #df['DX']=abs(df['MDI']-df['PDI'])/(df['MDI']+df['PDI'])*100
             #ADX0:=EMA((DMP-DMM)/(DMP+DMM)*100,M);
             #ADXR0:=EMA(ADX0,M);
             df['DX']=ta.EMA((df['NPDM']-df['NMDM'])/(df['NMDM']+df['NPDM'])*100,MM)
             df['ADX']=df['DX']
             df['ADXR']=ta.EMA(df['ADX'],MM)
-            df['AAJ'] = 3*df['ADX']-2*df['ADXR']
+            df['AAJ'] =0
+            df['AAJ'] = ta.EMA(3*df['ADX']-2*df['ADXR'],2)
             # for i in range(MM,len(df.index)):
             #     summDX=0
             #     summADX=0
@@ -416,11 +419,22 @@ class WhiteGuardStock:
             #plt.plot(df.index,df['MACDsignal'],label='signal dea')
            # plt.plot(df.index,df['ADX'] ,label='ADX')
             #plt.plot(df.index,df['ADXR'] ,label='ADXR')
+
+            print(df)
+            #根据时间画总有问题，先换成索引
+            #df['date'] = df['time_key'].map(lambda x:x.split()[0])
+            #plt.gca().xaxis.set_major_formatter(mdate.DateFormatter('%m/%d/%Y'))
+            #plt.gca().xaxis.set_major_locator(mdate.DayLocator())
             plt.plot(df.index,df['PDI'] ,label='PDI')
             plt.plot(df.index,df['MDI'] ,label='MDI')
             #plt.plot(df.index,df['SHORTMA'] ,label='SHORTMA')
             #plt.plot(df.index,df['LONGMA'] ,label='LONGMA')
             plt.plot(df.index,df['AAJ'] ,label='AAJ')
+            plt.ylim((-100, 100))
+            plt.xlabel("Trading Day")
+            plt.ylabel("Fluctuation Ratio")
+            plt.title('%s DMI2 Indicator'%stock_id)
+            #plt.setp(plt.gca().get_xticklabels(), rotation=50)
             plt.legend(loc='best')
             #plt.plot(df)
             plt.grid()
@@ -435,6 +449,6 @@ if __name__ == "__main__":
     wgs=WhiteGuardStock()
     #wgs.init_cn_stock("data/stocklist.csv")
     #wgs.loop_all_cn_stocks('futu',30)
-    wgs.get_stock_dmi_my_signal('HK.00700',100)
+    wgs.get_stock_dmi_my_signal('US.SRNE',100)
     #loop_all_stocks('HK.800000')
     #get_stock_kdj_buy_signal('HK.03883',30)
