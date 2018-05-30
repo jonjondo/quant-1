@@ -7,6 +7,7 @@ import datetime
 import numpy as np
 import pandas as pb
 import matplotlib.dates as mdate
+import matplotlib.ticker as ticker
 
 api_ip = '119.29.141.202'#'119.29.141.202'这里要使用本地客户端
 api_port = 11111
@@ -18,7 +19,8 @@ class WhiteGuardStock:
         self.cn_stock_list = pb.read_csv(cn_stock_file_name,encoding='GBK')
     def init_hk_stock(self,hk_stock_file_name):
         self.hk_stock_list = pb.read_csv(hk_stock_file_name)
-
+    def clear_quote(self):
+        self.quote_ctx.close()
 
 
 
@@ -341,33 +343,26 @@ class WhiteGuardStock:
             plt.plot(df.index,df['ADXR'] ,label='ADXR')
             plt.plot(df.index,df['PLUS_DI'] ,label='PLUS_DI')
             plt.plot(df.index,df['MINUS_DI'] ,label='MINUS_DI')
-            #plt.plot(df.index,df['SHORTMA'] ,label='SHORTMA')
-            #plt.plot(df.index,df['LONGMA'] ,label='LONGMA')
             plt.plot(df.index,df['AAJ'] ,label='AAJ')
-
-            #plt.plot(df.index,df['my_MACD'],label='my dif')
-            #plt.plot(df.index,df['my_MACDsignal'],label='my dea')
-
             plt.legend(loc='best')
             #plt.plot(df)
             plt.grid()
             #记得加这一句，不然不会显示图像
             plt.show()
 
-    def get_stock_dmi_my_signal(self,stock_id,days):
+    def get_stock_dmi_my_signal(self,stock_id,start_day,end_day):
         N,MM=14,6
-        start_day='2017-11-28'
-        end_day='2018-05-28'
-        ret, df = self.quote_ctx.get_history_kline(stock_id, start_day,end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
-        if not df.empty:
-            high=df['high']
-            low=df['low']
-            close=df['close']
+        ret, dfret = self.quote_ctx.get_history_kline(stock_id, start_day,end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
+        if not dfret.empty:
+            high=dfret['high']
+            low=dfret['low']
+            close=dfret['close']
             df = pd.DataFrame()
             df['h-l']=high-low
             df['h-c']=abs(high-close.shift(1))
             df['l-c']=abs(close.shift(1)-low)
             df['tr']=df.max(axis=1)
+
 
             #df['tr']=ta.EMA(df['tr'],N)
             #EXPMEMA(MAX(MAX(HIGH-LOW,ABS(HIGH-REF(CLOSE,1))),ABS(REF(CLOSE,1)-LOW)),N);
@@ -414,29 +409,29 @@ class WhiteGuardStock:
             #     df.ix[i,'ADX']=summDX/MM
             #     summADX+=df.ix[j,'ADX']
             #     df.ix[i,'ADXR']=summADX/MM
-            fig = plt.figure(figsize=[18,5])
-            #plt.plot(df.index,df['MACD'],label='macd dif')
-            #plt.plot(df.index,df['MACDsignal'],label='signal dea')
-           # plt.plot(df.index,df['ADX'] ,label='ADX')
-            #plt.plot(df.index,df['ADXR'] ,label='ADXR')
+            #算好了拼一下
+            dfret = pd.concat([dfret, df], axis=1)
 
-            print(df)
-            #根据时间画总有问题，先换成索引
-            #df['date'] = df['time_key'].map(lambda x:x.split()[0])
-            #plt.gca().xaxis.set_major_formatter(mdate.DateFormatter('%m/%d/%Y'))
-            #plt.gca().xaxis.set_major_locator(mdate.DayLocator())
-            plt.plot(df.index,df['PDI'] ,label='PDI')
-            plt.plot(df.index,df['MDI'] ,label='MDI')
-            #plt.plot(df.index,df['SHORTMA'] ,label='SHORTMA')
-            #plt.plot(df.index,df['LONGMA'] ,label='LONGMA')
-            plt.plot(df.index,df['AAJ'] ,label='AAJ')
-            plt.ylim((-100, 100))
+
+            fig = plt.figure(figsize=[18,5])
+            fig.autofmt_xdate()
+            dfret['date'] = pd.to_datetime(dfret['time_key'])
+            dfret.index = dfret['date'].tolist()
+            print(dfret)
+            plt.plot(dfret.index.to_pydatetime() ,dfret['PDI'] ,label='PDI')
+            plt.plot(dfret.index.to_pydatetime() ,dfret['MDI'] ,label='MDI')
+            plt.plot(dfret.index.to_pydatetime() ,dfret['AAJ'] ,label='AAJ')
+            plt.ylim((-120, 120))
             plt.xlabel("Trading Day")
             plt.ylabel("Fluctuation Ratio")
             plt.title('%s DMI2 Indicator'%stock_id)
-            #plt.setp(plt.gca().get_xticklabels(), rotation=50)
+            plt.gca().xaxis.set_major_formatter(mdate.DateFormatter('%Y%m/%d'))
+            #plt.gca().xaxis.set_major_locator(mdate.DayLocator())
+            plt.gca().xaxis.set_major_locator(ticker.MultipleLocator(5))
+            plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(20))
+            plt.setp(plt.gca().get_xticklabels(), rotation=45)
+
             plt.legend(loc='best')
-            #plt.plot(df)
             plt.grid()
             #记得加这一句，不然不会显示图像
             plt.show()
@@ -449,6 +444,7 @@ if __name__ == "__main__":
     wgs=WhiteGuardStock()
     #wgs.init_cn_stock("data/stocklist.csv")
     #wgs.loop_all_cn_stocks('futu',30)
-    wgs.get_stock_dmi_my_signal('US.SRNE',100)
+    wgs.get_stock_dmi_my_signal('HK.00700','2017-11-28','2018-05-30')
     #loop_all_stocks('HK.800000')
     #get_stock_kdj_buy_signal('HK.03883',30)
+    wgs.clear_quote()
