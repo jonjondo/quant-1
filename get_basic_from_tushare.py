@@ -82,7 +82,7 @@ def get_basic_detail_by_history(info_type,start_year,end_year):
                 try:
                     df = ts.get_report_data(year,quater)
                     if not df.empty:
-                        ret_file_name = "data/hsbasic/沪深股票业绩报告主表"+str(year)+"q"+str(quater)+".csv"
+                        ret_file_name = "data/hsbasic/cnstockquaterreport"+str(year)+"q"+str(quater)+".csv"
                         df.to_csv(ret_file_name, index=True, sep=',')
                         print("file %s saved" %ret_file_name)
                 except Exception as e:
@@ -97,7 +97,7 @@ def get_basic_detail_by_history(info_type,start_year,end_year):
                 try:
                     df = ts.get_profit_data(year,quater)
                     if not df.empty:
-                        ret_file_name = "data/hsbasic/沪深股票盈利能力"+str(year)+"q"+str(quater)+".csv"
+                        ret_file_name = "data/hsbasic/cnstockbenefitability"+str(year)+"q"+str(quater)+".csv"
                         df.to_csv(ret_file_name, index=True, sep=',')
                         print("file %s saved" %ret_file_name)
                 except Exception as e:
@@ -112,7 +112,7 @@ def get_basic_detail_by_history(info_type,start_year,end_year):
                 try:
                     df = ts.get_operation_data(year,quater)
                     if not df.empty:
-                        ret_file_name = "data/hsbasic/沪深股票营运能力"+str(year)+"q"+str(quater)+".csv"
+                        ret_file_name = "data/hsbasic/cnstockoperationability"+str(year)+"q"+str(quater)+".csv"
                         df.to_csv(ret_file_name, index=True, sep=',')
                         print("file %s saved" %ret_file_name)
                 except Exception as e:
@@ -127,7 +127,7 @@ def get_basic_detail_by_history(info_type,start_year,end_year):
                 try:
                     df = ts.get_growth_data(year,quater)
                     if not df.empty:
-                        ret_file_name = "data/hsbasic/沪深股票成长能力"+str(year)+"q"+str(quater)+".csv"
+                        ret_file_name = "data/hsbasic/cnstockgrowthability"+str(year)+"q"+str(quater)+".csv"
                         df.to_csv(ret_file_name, index=True, sep=',')
                         print("file %s saved" %ret_file_name)
                 except Exception as e:
@@ -142,7 +142,7 @@ def get_basic_detail_by_history(info_type,start_year,end_year):
                 try:
                     df = ts.get_debtpaying_data(year,quater)
                     if not df.empty:
-                        ret_file_name = "data/hsbasic/沪深股票偿债能力"+str(year)+"q"+str(quater)+".csv"
+                        ret_file_name = "data/hsbasic/cnstockdebtability"+str(year)+"q"+str(quater)+".csv"
                         df.to_csv(ret_file_name, index=True, sep=',')
                         print("file %s saved" %ret_file_name)
                 except Exception as e:
@@ -157,7 +157,7 @@ def get_basic_detail_by_history(info_type,start_year,end_year):
                 try:
                     df = ts.get_cashflow_data(year,quater)
                     if not df.empty:
-                        ret_file_name = "data/hsbasic/沪深股票现金流量"+str(year)+"q"+str(quater)+".csv"
+                        ret_file_name = "data/hsbasic/cnstockcashflowability"+str(year)+"q"+str(quater)+".csv"
                         df.to_csv(ret_file_name, index=True, sep=',')
                         print("file %s saved" %ret_file_name)
                 except Exception as e:
@@ -167,33 +167,33 @@ def get_basic_detail_by_history(info_type,start_year,end_year):
 
 def get_basic_detail_by_quater(year,quater):
     df = ts.get_report_data(year,quater)
-    ret_file_name = "data/hsbasic/沪深股票业绩报告主表"+str(year)+"q"+str(quater)+".csv"
+    ret_file_name = "data/hsbasic/cnstockquaterreport"+str(year)+"q"+str(quater)+".csv"
     df.to_csv(ret_file_name, index=True, sep=',')
     print("file %s saved" %ret_file_name)
 
     df = ts.get_profit_data(year,quater)
-    ret_file_name = "data/hsbasic/沪深股票盈利能力"+str(year)+"q"+str(quater)+".csv"
+    ret_file_name = "data/hsbasic/cnstockbenefitability"+str(year)+"q"+str(quater)+".csv"
     df.to_csv(ret_file_name, index=True, sep=',')
     print("file %s saved" %ret_file_name)
 
     df = ts.get_operation_data(year,quater)
-    ret_file_name = "data/hsbasic/沪深股票营运能力"+str(year)+"q"+str(quater)+".csv"
+    ret_file_name = "data/hsbasic/cnstockoperationability"+str(year)+"q"+str(quater)+".csv"
     df.to_csv(ret_file_name, index=True, sep=',')
     print("file %s saved" %ret_file_name)
 
     df = ts.get_growth_data(year,quater)
-    ret_file_name = "data/hsbasic/沪深股票成长能力"+str(year)+"q"+str(quater)+".csv"
+    ret_file_name = "data/hsbasic/cnstockgrowthability"+str(year)+"q"+str(quater)+".csv"
     df.to_csv(ret_file_name, index=True, sep=',')
     print("file %s saved" %ret_file_name)
 
     df = ts.get_debtpaying_data(year,quater)
-    ret_file_name = "data/hsbasic/沪深股票偿债能力"+str(year)+"q"+str(quater)+".csv"
+    ret_file_name = "data/hsbasic/cnstockdebtability"+str(year)+"q"+str(quater)+".csv"
     df.to_csv(ret_file_name, index=True, sep=',')
     print("file %s saved" %ret_file_name)
 
 
     df = ts.get_cashflow_data(year,quater)
-    ret_file_name = "data/hsbasic/沪深股票现金流量"+str(year)+"q"+str(quater)+".csv"
+    ret_file_name = "data/hsbasic/cnstockcashflowability"+str(year)+"q"+str(quater)+".csv"
     df.to_csv(ret_file_name, index=True, sep=',')
     print("file %s saved" %ret_file_name)
 
