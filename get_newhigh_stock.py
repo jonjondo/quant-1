@@ -412,7 +412,8 @@ class WhiteGuardStock:
             #算好了拼一下
             dfret = pd.concat([dfret, df], axis=1)
 
-
+            '''
+            #绘图函数暂时注释
             fig = plt.figure(figsize=[18,6])
             fig.autofmt_xdate()
             dfret['date'] = pd.to_datetime(dfret['time_key'])
@@ -422,9 +423,9 @@ class WhiteGuardStock:
             plt.plot(dfret.index.to_pydatetime() ,dfret['ADXR'] ,label='ADXR',linestyle='-',color='#00ff00',alpha=0.1)
             plt.fill_between(dfret.index.to_pydatetime(), dfret['ADX'], dfret['ADXR'], dfret['ADX'] > dfret['ADXR'],color='#ff0000', alpha=1)
             plt.fill_between(dfret.index.to_pydatetime(), dfret['ADX'], dfret['ADXR'], dfret['ADX'] < dfret['ADXR'],color='#00ff00', alpha=1)
-            plt.plot(dfret.index.to_pydatetime() ,dfret['PDI'] ,label='PDI',color="olive")
-            plt.plot(dfret.index.to_pydatetime() ,dfret['MDI'] ,label='MDI',color="gold")
-            plt.plot(dfret.index.to_pydatetime() ,dfret['AAJ'] ,label='AAJ',color="navy")
+            plt.plot(dfret.index.to_pydatetime() ,dfret['PDI'] ,label='PDI',color="#3383ba")
+            plt.plot(dfret.index.to_pydatetime() ,dfret['MDI'] ,label='MDI',color="#eb8a35")
+            plt.plot(dfret.index.to_pydatetime() ,dfret['AAJ'] ,label='AAJ',color="#51b151")
             plt.ylim((-110, 110))
             plt.xlabel("Trading Cycle")
             plt.ylabel("Fluctuation Ratio")
@@ -439,8 +440,107 @@ class WhiteGuardStock:
             plt.grid()
             #记得加这一句，不然不会显示图像
             plt.show()
-        return df['PDI'],df['MDI'],df['ADX'],df['ADXR']
+            '''
+        #return df['PDI'],df['MDI'],df['ADX'],df['ADXR']
+        return  dfret
 
+    def get_stock_dmi_my_signal_min(self,stock_id,min_length):
+        N,MM=14,6
+        try:
+            ret_code,ret_data= self.quote_ctx.subscribe(stock_id, 'K_15M', push=False)
+            ret, dfret = self.quote_ctx.get_cur_kline(stock_id, 100, ktype='K_'+str(min_length)+'M', autype='qfq')  # 获取分钟线,日内的话自己除就是了
+            if not dfret.empty:
+                high=dfret['high']
+                low=dfret['low']
+                close=dfret['close']
+                df = pd.DataFrame()
+                df['h-l']=high-low
+                df['h-c']=abs(high-close.shift(1))
+                df['l-c']=abs(close.shift(1)-low)
+                df['tr']=df.max(axis=1)
+
+
+                #df['tr']=ta.EMA(df['tr'],N)
+                #EXPMEMA(MAX(MAX(HIGH-LOW,ABS(HIGH-REF(CLOSE,1))),ABS(REF(CLOSE,1)-LOW)),N);
+                df['PDM']=high-high.shift(1)
+                df['MDM']=low.shift(1)-low
+                df['DPD']=0
+                df['DMD']=0
+                for i in range(len(df.index)):
+                    PDM=df.ix[i,'PDM']
+                    MDM=df.ix[i,'MDM']
+                    if PDM<0 or PDM<MDM:
+                        df.ix[i,'DPD']=0
+                    else:
+                        df.ix[i,'DPD']=PDM
+                    if MDM<0 or MDM<PDM:
+                        df.ix[i,'DMD']=0
+                    else:
+                        df.ix[i,'DMD']=MDM
+                for i in range(N,len(df.index)):
+                    #df.ix[i,'NTR']=sum(df.ix[i-N+1:i,'tr'])
+                    #df.ix[i,'NPDM']=sum(df.ix[i-N+1:i,'DPD'])
+                    #df.ix[i,'NMDM']=sum(df.ix[i-N+1:i,'DMD'])
+                    df.ix[i,'NTR']=ta.EMA(df.ix[i-N+1:i,'tr'],N).values[-1]
+                    df.ix[i,'NPDM']=ta.EMA(df.ix[i-N+1:i,'DPD'],N).values[-1]
+                    df.ix[i,'NMDM']=ta.EMA(df.ix[i-N+1:i,'DMD'],N).values[-1]
+                df['PDI']=df['NPDM']/df['NTR']*100
+                df['MDI']=df['NMDM']/df['NTR']*100
+
+                #df.to_csv("dmi2.csv")
+                #df['DX']=abs(df['MDI']-df['PDI'])/(df['MDI']+df['PDI'])*100
+                #ADX0:=EMA((DMP-DMM)/(DMP+DMM)*100,M);
+                #ADXR0:=EMA(ADX0,M);
+                df['DX']=ta.EMA((df['NPDM']-df['NMDM'])/(df['NMDM']+df['NPDM'])*100,MM)
+                df['ADX']=df['DX']
+                df['ADXR']=ta.EMA(df['ADX'],MM)
+                df['AAJ'] =0
+                df['AAJ'] = ta.EMA(3*df['ADX']-2*df['ADXR'],2)
+                # for i in range(MM,len(df.index)):
+                #     summDX=0
+                #     summADX=0
+                #     for j in range(i-MM,i):
+                #         summDX+=df.ix[j,'DX']
+                #         summADX+=df.ix[j,'ADX']
+                #     df.ix[i,'ADX']=summDX/MM
+                #     summADX+=df.ix[j,'ADX']
+                #     df.ix[i,'ADXR']=summADX/MM
+                #算好了拼一下
+                dfret = pd.concat([dfret, df], axis=1)
+        except:
+            print("结果异常，错误码:%d 返回结果:%s"%(ret,dfret))
+
+
+        #绘图函数暂时注释
+        '''
+        fig = plt.figure(figsize=[18,6])
+        #dfret.index = dfret['time_key'].tolist()
+        #print(dfret)
+        plt.plot(dfret.index,dfret['ADX'] ,label='ADX',linestyle='-',color='#ff0000',alpha=0.1)
+        plt.plot(dfret.index ,dfret['ADXR'] ,label='ADXR',linestyle='-',color='#00ff00',alpha=0.1)
+        plt.fill_between(dfret.index, dfret['ADX'], dfret['ADXR'], dfret['ADX'] > dfret['ADXR'],color='#ff0000', alpha=1)
+        plt.fill_between(dfret.index, dfret['ADX'], dfret['ADXR'], dfret['ADX'] < dfret['ADXR'],color='#00ff00', alpha=1)
+        plt.plot(dfret.index,dfret['PDI'] ,label='PDI',color="#3383ba")
+        plt.plot(dfret.index,dfret['MDI'] ,label='MDI',color="#eb8a35")
+        plt.plot(dfret.index,dfret['AAJ'] ,label='AAJ',color="#51b151")
+        plt.ylim((-110, 110))
+        plt.xlabel("Trading Cycle")
+        plt.ylabel("Fluctuation Ratio")
+        plt.title('%s DMI2 Indicator'%stock_id)
+        plt.gca().xaxis.set_major_formatter(mdate.DateFormatter('%Y/%m/%d %HH%MM%SS'))
+        #plt.gca().xaxis.set_major_locator(mdate.DayLocator())
+        plt.gca().xaxis.set_major_locator(ticker.MultipleLocator(5))
+        plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(10))
+        plt.setp(plt.gca().get_xticklabels(), rotation=45)
+
+        plt.legend(loc='best')
+        plt.grid()
+        #记得加这一句，不然不会显示图像
+        plt.show()
+
+            #return df['PDI'],df['MDI'],df['ADX'],df['ADXR']
+        '''
+        return  dfret
 
 if __name__ == "__main__":
     #draw_single_stock_MACD('HK.00700')
@@ -448,7 +548,8 @@ if __name__ == "__main__":
     wgs=WhiteGuardStock()
     #wgs.init_cn_stock("data/stocklist.csv")
     #wgs.loop_all_cn_stocks('futu',30)
-    wgs.get_stock_dmi_my_signal('HK.00700','2017-11-28','2018-05-30')
+    #wgs.get_stock_dmi_my_signal('HK.00700','2017-10-1','2018-06-1')
     #loop_all_stocks('HK.800000')
     #get_stock_kdj_buy_signal('HK.03883',30)
+    wgs.get_stock_dmi_my_signal_min('HK.00700',15)
     wgs.clear_quote()
