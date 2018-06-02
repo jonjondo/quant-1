@@ -9,7 +9,7 @@ import pandas as pb
 import matplotlib.dates as mdate
 import matplotlib.ticker as ticker
 
-api_ip = '119.29.141.202'#'119.29.141.202'这里要使用本地客户端
+api_ip = '192.168.0.104'#'119.29.141.202'这里要使用本地客户端
 api_port = 11111
 
 class WhiteGuardStock:
@@ -537,10 +537,90 @@ class WhiteGuardStock:
         plt.grid()
         #记得加这一句，不然不会显示图像
         plt.show()
-
-            #return df['PDI'],df['MDI'],df['ADX'],df['ADXR']
         '''
+            #return df['PDI'],df['MDI'],df['ADX'],df['ADXR']
+
         return  dfret
+
+    def open_trade_make_order(self,unlock_password, stock_id, trade_env):
+        if unlock_password == "":
+            raise Exception("请先配置交易解锁密码!")
+        quote_ctx = OpenQuoteContext(host=api_ip, port=api_port)  # 创建行情api
+        quote_ctx.subscribe(stock_id, "ORDER_BOOK", push=False)  # 定阅摆盘
+
+        # 创建交易api
+        is_hk_trade = 'HK.' in stock_id
+        if is_hk_trade:
+            trade_ctx = OpenHKTradeContext(host=api_ip, port=api_port)
+        else:
+            if trade_env != 0:
+                raise Exception("美股交易接口不支持仿真环境")
+            trade_ctx = OpenUSTradeContext(host=api_ip, port=api_port)
+
+        # 每手股数
+        lot_size = 0
+        is_unlock_trade = False
+        is_fire_trade = False
+        while not is_fire_trade:
+            sleep(2)
+            # 解锁交易
+            if not is_unlock_trade:
+                ret_code, ret_data = trade_ctx.unlock_trade(unlock_password)
+                is_unlock_trade = (ret_code == 0)
+                if not trade_env and not is_unlock_trade:
+                    print("请求交易解锁失败：{}".format(ret_data))
+                    continue
+
+            if lot_size == 0:
+                ret, data = quote_ctx.get_market_snapshot([stock_id])
+                lot_size = data.iloc[0]['lot_size'] if ret == 0 else 0
+                if ret != 0:
+                    print("取不到每手信息，重试中!")
+                    continue
+                elif lot_size <= 0:
+                    raise BaseException("该股票每手信息错误，可能不支持交易 code ={}".format(stock_id))
+
+            ret, data = quote_ctx.get_order_book(stock_id)  # 得到第十档数据
+            if ret != 0:
+                continue
+
+            # 计算交易价格
+            bid_order_arr = data['Bid']
+            if is_hk_trade:
+                if len(bid_order_arr) != 10:
+                    continue
+                # 港股下单: 价格定为第一档
+                price, _, _ = bid_order_arr[0]
+            else:
+                if len(bid_order_arr) == 0:
+                    continue
+                # 美股下单： 价格定为一档降10%
+                price, _, _ = bid_order_arr[0]
+                price = round(price * 0.94, 2)
+
+            qty = lot_size
+
+            # 价格和数量判断
+            if qty == 0 or price == 0.0:
+                continue
+
+            # 交易类型
+            order_side = 0  # 买
+            if is_hk_trade:
+                order_type = 0  # 港股增强限价单(普通交易)
+            else:
+                order_type = 2  # 美股限价单
+
+            # 下单
+            order_id = 0
+            ret_code, ret_data = trade_ctx.place_order(price=price, qty=qty, strcode=stock_id, orderside=order_side,
+                                                       ordertype=order_type, envtype=trade_env)
+            is_fire_trade = True
+            print('下单ret={} data={}'.format(ret_code, ret_data))
+            if ret_code == 0:
+                row = ret_data.iloc[0]
+                order_id = row['orderid']
+                print("下单%s成功，单价:%f 每手%d股,单号为%s"%(stock_id,price,lot_size,order_id))
 
 if __name__ == "__main__":
     #draw_single_stock_MACD('HK.00700')
@@ -551,5 +631,5 @@ if __name__ == "__main__":
     #wgs.get_stock_dmi_my_signal('HK.00700','2017-10-1','2018-06-1')
     #loop_all_stocks('HK.800000')
     #get_stock_kdj_buy_signal('HK.03883',30)
-    wgs.get_stock_dmi_my_signal_min('HK.00700',15)
+    wgs.get_stock_dmi_my_signal_min('HK.02382',15)
     wgs.clear_quote()
