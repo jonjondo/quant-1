@@ -9,16 +9,22 @@ import pandas as pb
 import matplotlib.dates as mdate
 import matplotlib.ticker as ticker
 
-api_ip = '192.168.0.104'#'119.29.141.202'这里要使用本地客户端
+api_ip = '192.168.0.105'#'119.29.141.202'这里要使用本地客户端
 api_port = 11111
 
-class WhiteGuardStock:
+class WhiteGuardStockCore:
     def __init__(self):
         self.quote_ctx = OpenQuoteContext(api_ip, api_port)
     def init_cn_stock(self,cn_stock_file_name):
         self.cn_stock_list = pb.read_csv(cn_stock_file_name,encoding='GBK')
     def init_hk_stock(self,hk_stock_file_name):
         self.hk_stock_list = pb.read_csv(hk_stock_file_name)
+    def start_hk_market(self,trade_env):
+        self.trade_ctx = OpenHKTradeContext(host=api_ip, port=api_port)
+    def start_us_market(self,trade_env):
+        if trade_env != 0:
+            raise Exception("美股交易接口不支持仿真环境")
+        self.trade_ctx = OpenUSTradeContext(host=api_ip, port=api_port)
     def clear_quote(self):
         self.quote_ctx.close()
 
@@ -542,20 +548,13 @@ class WhiteGuardStock:
 
         return  dfret
 
-    def open_trade_make_order(self,unlock_password, stock_id, trade_env):
+    def open_trade_make_order(self,unlock_password, stock_id, trade_env,order_side,stock_size):
         if unlock_password == "":
             raise Exception("请先配置交易解锁密码!")
-        quote_ctx = OpenQuoteContext(host=api_ip, port=api_port)  # 创建行情api
-        quote_ctx.subscribe(stock_id, "ORDER_BOOK", push=False)  # 定阅摆盘
-
+        #quote_ctx = OpenQuoteContext(host=api_ip, port=api_port)  # 创建行情api
+        self.quote_ctx.subscribe(stock_id, "ORDER_BOOK", push=False)  # 定阅摆盘
         # 创建交易api
         is_hk_trade = 'HK.' in stock_id
-        if is_hk_trade:
-            trade_ctx = OpenHKTradeContext(host=api_ip, port=api_port)
-        else:
-            if trade_env != 0:
-                raise Exception("美股交易接口不支持仿真环境")
-            trade_ctx = OpenUSTradeContext(host=api_ip, port=api_port)
 
         # 每手股数
         lot_size = 0
@@ -565,14 +564,14 @@ class WhiteGuardStock:
             sleep(2)
             # 解锁交易
             if not is_unlock_trade:
-                ret_code, ret_data = trade_ctx.unlock_trade(unlock_password)
+                ret_code, ret_data = self.trade_ctx.unlock_trade(unlock_password)
                 is_unlock_trade = (ret_code == 0)
                 if not trade_env and not is_unlock_trade:
                     print("请求交易解锁失败：{}".format(ret_data))
                     continue
 
             if lot_size == 0:
-                ret, data = quote_ctx.get_market_snapshot([stock_id])
+                ret, data = self.quote_ctx.get_market_snapshot([stock_id])
                 lot_size = data.iloc[0]['lot_size'] if ret == 0 else 0
                 if ret != 0:
                     print("取不到每手信息，重试中!")
@@ -580,52 +579,83 @@ class WhiteGuardStock:
                 elif lot_size <= 0:
                     raise BaseException("该股票每手信息错误，可能不支持交易 code ={}".format(stock_id))
 
-            ret, data = quote_ctx.get_order_book(stock_id)  # 得到第十档数据
+            ret, data = self.quote_ctx.get_order_book(stock_id)  # 得到第十档数据
             if ret != 0:
                 continue
-
-            # 计算交易价格
-            bid_order_arr = data['Bid']
-            if is_hk_trade:
-                if len(bid_order_arr) != 10:
-                    continue
-                # 港股下单: 价格定为第一档
-                price, _, _ = bid_order_arr[0]
-            else:
-                if len(bid_order_arr) == 0:
-                    continue
-                # 美股下单： 价格定为一档降10%
-                price, _, _ = bid_order_arr[0]
-                price = round(price * 0.94, 2)
-
-            qty = lot_size
-
-            # 价格和数量判断
-            if qty == 0 or price == 0.0:
-                continue
-
+            price = 0
+            qty = 0
             # 交易类型
-            order_side = 0  # 买
+            #order_side = 0  # 0，买 1,卖
             if is_hk_trade:
                 order_type = 0  # 港股增强限价单(普通交易)
             else:
                 order_type = 2  # 美股限价单
 
+            if order_side == 0 : #买入价格计算,直接秒卖一
+                # 计算交易价格
+                bid_order_arr = data['Ask']
+                if is_hk_trade:
+                    if len(bid_order_arr) != 10:
+                        continue
+                    # 港股下单: 价格定为第一档
+                    price, _, _ = bid_order_arr[0]
+                else:
+                    if len(bid_order_arr) == 0:
+                        continue
+                    # 美股下单： 价格定为一档降10%
+                    price, _, _ = bid_order_arr[0]
+                    price = round(price * 0.94, 2)
+
+                qty = lot_size * stock_size
+
+                # 价格和数量判断
+                if qty == 0 or price == 0.0:
+                    continue
+                typestr = '买单'
+            elif order_side == 1:   #卖出价格计算,直接秒买一
+                ask_order_arr = data['Bid']
+                if is_hk_trade:
+                    if len(ask_order_arr) != 10:
+                        continue
+                    # 港股下单: 价格定为第一档
+                    price, _, _ = ask_order_arr[0]
+                else:
+                    if len(ask_order_arr) == 0:
+                        continue
+                    # 美股下单： 价格定为一档降10%
+                    price, _, _ = ask_order_arr[0]
+                    price = round(price * 0.94, 2)
+
+                qty = lot_size * stock_size
+
+                # 价格和数量判断
+                if qty == 0 or price == 0.0:
+                    continue
+                typestr = '卖单'
+
+
             # 下单
             order_id = 0
-            ret_code, ret_data = trade_ctx.place_order(price=price, qty=qty, strcode=stock_id, orderside=order_side,
+            ret_code, ret_data = self.trade_ctx.place_order(price=price, qty=qty, strcode=stock_id, orderside=order_side,
                                                        ordertype=order_type, envtype=trade_env)
             is_fire_trade = True
-            print('下单ret={} data={}'.format(ret_code, ret_data))
+            #print('下单ret={} data={}'.format(ret_code, ret_data))
             if ret_code == 0:
                 row = ret_data.iloc[0]
                 order_id = row['orderid']
-                print("下单%s成功，单价:%f 每手%d股,单号为%s"%(stock_id,price,lot_size,order_id))
+                print("[%s] [%s]下%s成功，单价:%f 每手%d股,单号为%s"%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),stock_id,typestr,price,lot_size,order_id))
+
+
+    def get_current_position_list(self,trade_env):
+        ret_code, ret_data = self.trade_ctx.position_list_query(strcode='', stocktype='', pl_ratio_min='', pl_ratio_max='', envtype=trade_env)
+        return  ret_data
+
+
 
 if __name__ == "__main__":
     #draw_single_stock_MACD('HK.00700')
     #loop_all_hk_stocks_from_file("HSIIndexList.csv",60)
-    wgs=WhiteGuardStock()
+    wgs=WhiteGuardStockCore()
     #wgs.init_cn_stock("data/stocklist.csv")
     #wgs.loop_all_cn_stocks('futu',30)
     #wgs.get_stock_dmi_my_signal('HK.00700','2017-10-1','2018-06-1')
