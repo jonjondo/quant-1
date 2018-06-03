@@ -453,7 +453,7 @@ class WhiteGuardStockCore:
     def get_stock_dmi_my_signal_min(self,stock_id,min_length):
         N,MM=14,6
         try:
-            ret_code,ret_data= self.quote_ctx.subscribe(stock_id, 'K_15M', push=False)
+            ret_code,ret_data= self.quote_ctx.subscribe(stock_id, 'K_'+str(min_length)+'M', push=False)
             ret, dfret = self.quote_ctx.get_cur_kline(stock_id, 100, ktype='K_'+str(min_length)+'M', autype='qfq')  # 获取分钟线,日内的话自己除就是了
             if not dfret.empty:
                 high=dfret['high']
@@ -483,17 +483,22 @@ class WhiteGuardStockCore:
                         df.ix[i,'DMD']=0
                     else:
                         df.ix[i,'DMD']=MDM
-                for i in range(N,len(df.index)):
-                    #df.ix[i,'NTR']=sum(df.ix[i-N+1:i,'tr'])
-                    #df.ix[i,'NPDM']=sum(df.ix[i-N+1:i,'DPD'])
-                    #df.ix[i,'NMDM']=sum(df.ix[i-N+1:i,'DMD'])
-                    df.ix[i,'NTR']=ta.EMA(df.ix[i-N+1:i,'tr'],N).values[-1]
-                    df.ix[i,'NPDM']=ta.EMA(df.ix[i-N+1:i,'DPD'],N).values[-1]
-                    df.ix[i,'NMDM']=ta.EMA(df.ix[i-N+1:i,'DMD'],N).values[-1]
+                #下面这段是原先的代码，先注释掉吧
+                # for i in range(N,len(df.index)):
+                #     #df.ix[i,'NTR']=sum(df.ix[i-N+1:i,'tr'])
+                #     #df.ix[i,'NPDM']=sum(df.ix[i-N+1:i,'DPD'])
+                #     #df.ix[i,'NMDM']=sum(df.ix[i-N+1:i,'DMD'])
+                #     #df.ix[i,'NTR']=ta.EMA(df.ix[i-N+1:i,'tr'],N).values[-1]
+                #     #df.ix[i,'NPDM']=ta.EMA(df.ix[i-N+1:i,'DPD'],N).values[-1]
+                #     #df.ix[i,'NMDM']=ta.EMA(df.ix[i-N+1:i,'DMD'],N).values[-1]
+                #     pass
+                df['NTR']=ta.EMA(df['tr'],N)
+                df['NPDM']=ta.EMA(df['DPD'],N)
+                df['NMDM']=ta.EMA(df['DMD'],N)
                 df['PDI']=df['NPDM']/df['NTR']*100
                 df['MDI']=df['NMDM']/df['NTR']*100
 
-                #df.to_csv("dmi2.csv")
+                ##下面这段是原先的代码，先注释掉吧
                 #df['DX']=abs(df['MDI']-df['PDI'])/(df['MDI']+df['PDI'])*100
                 #ADX0:=EMA((DMP-DMM)/(DMP+DMM)*100,M);
                 #ADXR0:=EMA(ADX0,M);
@@ -502,6 +507,8 @@ class WhiteGuardStockCore:
                 df['ADXR']=ta.EMA(df['ADX'],MM)
                 df['AAJ'] =0
                 df['AAJ'] = ta.EMA(3*df['ADX']-2*df['ADXR'],2)
+                #下面这段是原先的代码，先注释掉吧
+                #df['AAJ'] = 3*df['ADX']-2*df['ADXR']
                 # for i in range(MM,len(df.index)):
                 #     summDX=0
                 #     summADX=0
