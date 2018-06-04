@@ -22,7 +22,7 @@ TRADA_ACTION_SELL=1
 test_mode = True
 LOCK_PASS= '851226'
 TIME_K = 5
-TRADE_LIST=['HK.62671','HK.62630','HK.00700']
+TRADE_LIST=['HK.62671','HK.00371','HK.00700']
 
 
 
@@ -49,7 +49,7 @@ class AutoFutuTrade:
 
 
     def start_trade(self,):
-        self.timer = threading.Timer(3.0, self.auto_trade, )
+        self.timer = threading.Timer(5.0, self.auto_trade, )
         self.timer.start()
 
     #测试用的函数
@@ -69,20 +69,24 @@ class AutoFutuTrade:
             #if test_mode == True:
                  print("[%s] [%s] 触发买入条件,AAJ为%s 索引为%d"%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),stock_id,df.iat[-1,-1],minaaj_index))
                  logger.info("[%s] 触发买入条件,AAJ为%s 索引为%d"%(stock_id,df.iat[-1,-1],minaaj_index))
-                 self.make_buy_order(LOCK_PASS,stock_id,TRADE_ENV,TRADA_ACTION_BUY)
-                 self.last_buy_point = minaaj
+                 #买，每次5000块钱的，要计算一下
+                 ret_code,ret_data = self.make_buy_order(LOCK_PASS,stock_id,TRADE_ENV,TRADA_ACTION_BUY,5000)
+                 logger.info(ret_data)
+                 if ret_code == 0:
+                    self.last_buy_point = minaaj
             # #在这里决策要不要买卖,粗暴点，把持仓扫一遍
             #if df.iat[-1,-1] > 0 and df.iat[-2,-1] > df.iat[-1,-1]:
-            print("[%s][%s]+++检测买入条件不满足+++."%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),stock_id))
-            logger.info("[%s]+++检测买入条件不满足+++."%(stock_id))
+            else:
+                print("[%s][%s]+++检测买入条件不满足+++."%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),stock_id))
+                logger.info("[%s]+++检测买入条件不满足+++."%(stock_id))
         #再检查该不该卖持仓
         self.make_sell_order(LOCK_PASS,TRADE_ENV,TRADA_ACTION_SELL)
-        self.timer = threading.Timer(3.0, self.auto_trade, )
+        self.timer = threading.Timer(5.0, self.auto_trade, )
         self.timer.start()
 
 
-    def make_buy_order(self,unlock_password, stock_id, trade_env,order_side):
-        self.wgs.open_trade_make_order(unlock_password, stock_id, trade_env,order_side,1)
+    def make_buy_order(self,unlock_password, stock_id, trade_env,order_side,qty):
+        return self.wgs.open_trade_make_order(unlock_password, stock_id, trade_env,order_side,qty) #买入的时候qty填金额，比如买多少钱为上限，卖出的时候传卖几手
 
 
     def make_sell_order(self,unlock_password,trade_env,order_side):
@@ -96,8 +100,11 @@ class AutoFutuTrade:
                 if df_dmi.iat[-1,-1] > 0 and df_dmi.iat[-2,-1] > df_dmi.iat[-1,-1] and df_dmi.iat[-2,-1] == maxaaj and self.last_sell_point != maxaaj: #AAJ大于多少卖出,且算AJJ是不是出了顶部拐点。
                     print("[%s] [%s] 触发卖出条件,AAJ为%s 索引为%d"%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),df.iloc[i]['code'],df_dmi.iat[-1,-1],maxaaj_index))
                     logger.info("[%s] 触发卖出条件,AAJ为%s 索引为%d"%(df.iloc[i]['code'],df_dmi.iat[-1,-1],maxaaj_index))
-                    self.wgs.open_trade_make_order(LOCK_PASS,df.iloc[i]['code'],trade_env,order_side,1)
-                    self.last_sell_point = maxaaj
+                    #卖出可售数量的一半
+                    ret_code,ret_data = self.wgs.open_trade_make_order(LOCK_PASS,df.iloc[i]['code'],trade_env,order_side,int(df.iloc[i]['can_sell_qty'])/int(df.iloc[i]['qty'])/2)
+                    logger.info(ret_data)
+                    if ret_code == 0:
+                        self.last_sell_point = maxaaj
             #print(df_dmi)
                 print("[%s][%s]---遍历卖出条件不满足---."%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),df.iloc[i]['code']))
                 logger.info("[%s]---遍历卖出条件不满足---."%(df.iloc[i]['code']))

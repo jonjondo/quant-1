@@ -9,7 +9,7 @@ import pandas as pb
 import matplotlib.dates as mdate
 import matplotlib.ticker as ticker
 
-api_ip = '192.168.0.105'#'119.29.141.202'这里要使用本地客户端
+api_ip = '192.168.0.104'#'119.29.141.202'这里要使用本地客户端
 api_port = 11111
 
 class WhiteGuardStockCore:
@@ -581,7 +581,7 @@ class WhiteGuardStockCore:
                 ret, data = self.quote_ctx.get_market_snapshot([stock_id])
                 lot_size = data.iloc[0]['lot_size'] if ret == 0 else 0
                 if ret != 0:
-                    print("取不到每手信息，重试中!")
+                    print("取不到每手信息，错误码%d 错误信息 %s重试中!"%(ret,data))
                     continue
                 elif lot_size <= 0:
                     raise BaseException("该股票每手信息错误，可能不支持交易 code ={}".format(stock_id))
@@ -613,7 +613,9 @@ class WhiteGuardStockCore:
                     price, _, _ = bid_order_arr[0]
                     price = round(price * 0.94, 2)
 
-                qty = lot_size * stock_size
+                qty = int(stock_size/price/lot_size)*lot_size #资金上限除以单价，算出来是多少股
+                if qty < lot_size:
+                    qty = lot_size
 
                 # 价格和数量判断
                 if qty == 0 or price == 0.0:
@@ -650,8 +652,9 @@ class WhiteGuardStockCore:
             if ret_code == 0:
                 row = ret_data.iloc[0]
                 order_id = row['orderid']
-                print("[%s] [%s]下%s成功，单价:%f 每手%d股,单号为%s"%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),stock_id,typestr,price,lot_size,order_id))
-
+                ret_data = "[%s] [%s]下%s成功，单价:%f 每手%d股,金额%f HK$,单号为%s"%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),stock_id,typestr,price,lot_size,price*qty,order_id)
+                print(ret_data)
+            return ret_code,ret_data
 
     def get_current_position_list(self,trade_env):
         ret_code, ret_data = self.trade_ctx.position_list_query(strcode='', stocktype='', pl_ratio_min='', pl_ratio_max='', envtype=trade_env)
