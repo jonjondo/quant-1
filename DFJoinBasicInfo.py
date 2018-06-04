@@ -23,8 +23,6 @@ def get_total_report(report_type,out_file_name):
                 for i in range(3,df.columns.size):
                     #df.columns.values[i]=df.columns.values[i] + '_' +filename[-10:-4]
                     df = df.rename(columns={df.columns.values[i]: df.columns.values[i] + '_' +filename[-10:-4]})
-                #print(df.columns.values.tolist())
-                #print(df)
                 df_basic = pb.merge(df_basic,df,on='code',how='left')
         #df_basic = df_basic.drop_duplicates(['code'])
         df_basic.to_csv(os.path.join(path,out_file_name))
