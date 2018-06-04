@@ -78,8 +78,8 @@ def make_order_and_cancel(api_svr_ip, api_svr_port, unlock_password, test_code, 
         if is_hk_trade:
             if len(bid_order_arr) != 10:
                 continue
-            # 港股下单: 价格定为第十档
-            price, _, _ = bid_order_arr[9]
+            # 港股下单: 价格定为第一档
+            price, _, _ = bid_order_arr[0]
         else:
             if len(bid_order_arr) == 0:
                 continue
@@ -111,26 +111,26 @@ def make_order_and_cancel(api_svr_ip, api_svr_port, unlock_password, test_code, 
             order_id = row['orderid']
 
         # 循环撤单
-        sleep(2)
-        if order_id != 0:
-            while True:
-                ret_code, ret_data = trade_ctx.set_order_status(status=0, orderid=order_id,
-                                                                envtype=trade_env)
-                print("撤单ret={} data={}".format(ret_code, ret_data))
-                if ret_code == 0:
-                    break
-                else:
-                    sleep(2)
+        # sleep(2)
+        # if order_id != 0:
+        #     while True:
+        #         ret_code, ret_data = trade_ctx.set_order_status(status=0, orderid=order_id,
+        #                                                         envtype=trade_env)
+        #         print("撤单ret={} data={}".format(ret_code, ret_data))
+        #         if ret_code == 0:
+        #             break
+        #         else:
+        #             sleep(2)
     # destroy object
     quote_ctx.close()
     trade_ctx.close()
 
 
 if __name__ == "__main__":
-    API_SVR_IP = '192.168.1.31'
+    API_SVR_IP = '192.168.0.104'
     API_SVR_PORT = 11111
     UNLOCK_PASSWORD = "851226"
-    TEST_CODE = 'HK.23936'  # 'US.BABA' 'HK.00700'
+    TEST_CODE = 'HK.60361'  # 'US.BABA' 'HK.00700'
     TRADE_ENV = 1
 
     make_order_and_cancel(API_SVR_IP, API_SVR_PORT, UNLOCK_PASSWORD, TEST_CODE, TRADE_ENV)
