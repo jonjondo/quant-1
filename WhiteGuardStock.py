@@ -254,8 +254,24 @@ class WhiteGuardStockCore:
                     self.cn_stock_list.loc[(info.code == EachStockID),'KDJ']=1
                 if self.get_stock_ma_cross_signal(EachStockID,days):
                     self.cn_stock_list.loc[(info.code == EachStockID),'MACROSS']=1
+                try:
+                    df=self.get_stock_dmi_my_signal(EachStockID,'2018-1-1',time.strftime("%Y-%m-%d",time.localtime(time.time())))
+                    #print(df)
+                    #在这里决策要不要买,粗暴点，AAJ小于多少才买,且算AJJ是不是出了底部拐点。
+
+                    minaaj = ta.MIN(df['AAJ'].values[:-1], timeperiod=12)[-1]
+                    minaaj_index = ta.MININDEX(df['AAJ'].values[:-1], timeperiod=12)[-1]
+                    #print(minaaj,minaaj_index,df.iat[-1,-1],stock_id)
+                    #最新的AAJ小于0，且大于低谷，并且低谷就是近一段时间的最低值，确认反转
+                    if df.iat[-1,-1] < -45 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj:
+                        self.cn_stock_list.loc[(info.code == EachStockID),'DMI2']=1
+                except:
+                    continue
         print("---------------------------END-------------------------------")
+        print("----------------------KDJ金叉 MA穿越--------------------------")
         print(self.cn_stock_list.loc[(info['KDJ'] == 1) & (info['MACROSS'] == 1) ])
+        print("---------------------------DMI2买入指标-------------------------------")
+        print(self.cn_stock_list.loc[(info['DMI2'] == 1)])
 
 
     def get_stock_kdj_buy_signal(self,stock_id,days):
@@ -387,15 +403,20 @@ class WhiteGuardStockCore:
                     df.ix[i,'DMD']=0
                 else:
                     df.ix[i,'DMD']=MDM
-            for i in range(N,len(df.index)):
-                #df.ix[i,'NTR']=sum(df.ix[i-N+1:i,'tr'])
-                #df.ix[i,'NPDM']=sum(df.ix[i-N+1:i,'DPD'])
-                #df.ix[i,'NMDM']=sum(df.ix[i-N+1:i,'DMD'])
-                df.ix[i,'NTR']=ta.EMA(df.ix[i-N+1:i,'tr'],N).values[-1]
-                df.ix[i,'NPDM']=ta.EMA(df.ix[i-N+1:i,'DPD'],N).values[-1]
-                df.ix[i,'NMDM']=ta.EMA(df.ix[i-N+1:i,'DMD'],N).values[-1]
-            df['PDI']=df['NPDM']/df['NTR']*100
-            df['MDI']=df['NMDM']/df['NTR']*100
+                #下面这段是原先的代码，先注释掉吧
+                # for i in range(N,len(df.index)):
+                #     #df.ix[i,'NTR']=sum(df.ix[i-N+1:i,'tr'])
+                #     #df.ix[i,'NPDM']=sum(df.ix[i-N+1:i,'DPD'])
+                #     #df.ix[i,'NMDM']=sum(df.ix[i-N+1:i,'DMD'])
+                #     #df.ix[i,'NTR']=ta.EMA(df.ix[i-N+1:i,'tr'],N).values[-1]
+                #     #df.ix[i,'NPDM']=ta.EMA(df.ix[i-N+1:i,'DPD'],N).values[-1]
+                #     #df.ix[i,'NMDM']=ta.EMA(df.ix[i-N+1:i,'DMD'],N).values[-1]
+                #     pass
+                df['NTR']=ta.EMA(df['tr'],N)
+                df['NPDM']=ta.EMA(df['DPD'],N)
+                df['NMDM']=ta.EMA(df['DMD'],N)
+                df['PDI']=df['NPDM']/df['NTR']*100
+                df['MDI']=df['NMDM']/df['NTR']*100
 
             #df.to_csv("dmi2.csv")
             #df['DX']=abs(df['MDI']-df['PDI'])/(df['MDI']+df['PDI'])*100
@@ -666,10 +687,10 @@ if __name__ == "__main__":
     #draw_single_stock_MACD('HK.00700')
     #loop_all_hk_stocks_from_file("HSIIndexList.csv",60)
     wgs=WhiteGuardStockCore()
-    #wgs.init_cn_stock("data/stocklist.csv")
-    #wgs.loop_all_cn_stocks('futu',30)
+    wgs.init_cn_stock("data/stocklist.csv")
+    wgs.loop_all_cn_stocks('futu',30)
     #wgs.get_stock_dmi_my_signal('HK.00700','2017-10-1','2018-06-1')
     #loop_all_stocks('HK.800000')
     #get_stock_kdj_buy_signal('HK.03883',30)
-    wgs.get_stock_dmi_my_signal_min('HK.02382',15)
+    #wgs.get_stock_dmi_my_signal_min('HK.02382',15)
     wgs.clear_quote()
