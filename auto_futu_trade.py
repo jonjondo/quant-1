@@ -100,7 +100,7 @@ class AutoFutuTrade:
                     print("[%s] [%s] 触发卖出条件,AAJ为%s 索引为%d"%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),df.iloc[i]['code'],df_dmi.iat[-1,-1],maxaaj_index))
                     logger.info("[%s] 触发卖出条件,AAJ为%s 索引为%d"%(df.iloc[i]['code'],df_dmi.iat[-1,-1],maxaaj_index))
                     #卖出可售数量的一半
-                    ret_code,ret_data = self.wgs.open_trade_make_order(LOCK_PASS,df.iloc[i]['code'],trade_env,order_side,int(df.iloc[i]['can_sell_qty'])/int(df.iloc[i]['qty']))
+                    ret_code,ret_data = self.wgs.open_trade_make_order(LOCK_PASS,df.iloc[i]['code'],trade_env,order_side,int(df.iloc[i]['can_sell_qty']/df.iloc[i]['qty']))
                     logger.info(ret_data)
                     if ret_code == 0:
                         self.last_sell_point = maxaaj

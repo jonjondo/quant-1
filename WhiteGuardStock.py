@@ -6,9 +6,7 @@ from futuquant.open_context import *
 import datetime
 import numpy as np
 import pandas as pb
-import matplotlib.dates as mdate
-import matplotlib.ticker as ticker
-
+import chardet
 
 
 class WhiteGuardStockCore:
@@ -16,6 +14,7 @@ class WhiteGuardStockCore:
         self.api_ip = dst_ip
         self.api_port = dst_port
         self.quote_ctx = OpenQuoteContext(self.api_ip, self.api_port)
+        self.df_total = pd.DataFrame()
     def init_cn_stock(self,cn_stock_file_name):
         self.cn_stock_list = pb.read_csv(cn_stock_file_name,encoding='GBK')
     def init_hk_stock(self,hk_stock_file_name):
@@ -275,12 +274,16 @@ class WhiteGuardStockCore:
                     df=self.get_stock_dmi_my_signal(EachStockID,'2018-1-1',time.strftime("%Y-%m-%d",time.localtime(time.time())))
                     #print(df)
                     minaaj = ta.MIN(df['AAJ'].values[:-1], timeperiod=12)[-1]
+                    maxaaj = ta.MAX(df['AAJ'].values[:-1], timeperiod=12)[-1]
                     #minaaj_index = ta.MININDEX(df['AAJ'].values[:-1], timeperiod=12)[-1]
                     #print(minaaj,minaaj_index,df.iat[-1,-1],stock_id)
                     #最新的AAJ小于0，且大于低谷，并且低谷就是近一段时间的最低值，确认反转
                     if df.iat[-1,-1] < -45 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj:
                         info.loc[(info.code == EachStockID),'DMI2']=1
-                        print("%s %s[DMI2反转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
+                        print("%s %s[DMI2底部反转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
+                    elif  df.iat[-2,-1] > df.iat[-1,-1] and df.iat[-2,-1] == maxaaj: #去掉大于0的条件
+                        info.loc[(info.code == EachStockID),'DMI2']= -1
+                        print("%s %s[DMI2顶部反转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
                 except:
                     continue
         print("---------------------------END-------------------------------")
@@ -288,6 +291,7 @@ class WhiteGuardStockCore:
         print(info.loc[(info['KDJ'] == 1) & (info['MACROSS'] == 1) ])
         print("---------------------------DMI2买入指标-------------------------------")
         print(info.loc[(info['DMI2'] == 1) & ((info['KDJ'] == 1) | (info['MACROSS'] == 1))])
+        return info
 
 
     def get_stock_kdj_buy_signal(self,stock_id,days):
@@ -697,19 +701,46 @@ class WhiteGuardStockCore:
         ret_code, ret_data = self.trade_ctx.position_list_query(strcode='', stocktype='', pl_ratio_min='', pl_ratio_max='', envtype=trade_env)
         return  ret_data
 
+    #获取每天的策略，该买啥卖啥
+    def get_everyday_schedule(self):
+        self.init_cn_stock("data/stocklist.csv")
+        #wgs.loop_all_cn_stocks('futu',30,0)
+        self.init_hk_stock("data/HSIIndexList.csv")
+        df = self.loop_all_stocks('futu',30,0) #0 沪深 #1 香港 #3美国
+        self.df_total = self.df_total.append(df)
+        df = self.loop_all_stocks('futu',30,1) #0 沪深 #1 香港 #3美国
+        self.df_total = self.df_total.append(df)
+        df_selected =wgs.df_total.loc[(wgs.df_total['DMI2'] == 1) & ((wgs.df_total['KDJ'] == 1) | (wgs.df_total['MACROSS'] == 1))]
+        df_sell = wgs.df_total.loc[(wgs.df_total['DMI2'] == -1)]
+        print("------------------选中的-----------------------")
+        print(df_selected)
+        print("------------------结束------------------------")
+        df_selected.to_csv("data/schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv",columns=['id','code','stock_name'])
+        with open("data/storagelist.csv", 'rb') as f:
+                result = chardet.detect(f.read())
+                df_storage = pb.read_csv("data/storagelist.csv",encoding=result['encoding'],names = ['id','code','stock_name'])
+        #df_storage = pd.read_csv("data/storagelist.csv")
+        df_storage=df_storage.append(df_selected)
+        #df_storage = df_storage.drop_duplicates(['code'])
+        df_storage_keep = df_storage[~(df_storage['code'].isin(df_sell['code']))]
+        df_storage_to_sell = df_storage[(df_storage['code'].isin(df_sell['code']))]
+        df_storage_keep.to_csv("data/storagelist.csv",columns=['id','code','stock_name'])
+        print("---------------------该卖的----------------------")
+        print(df_storage_to_sell)
+        print("----------------------结束-----------------------")
+
 
 
 if __name__ == "__main__":
     #draw_single_stock_MACD('HK.00700')
     #loop_all_hk_stocks_from_file("HSIIndexList.csv",60)
-    wgs=WhiteGuardStockCore('192.168.0.105',11111)
-    wgs.init_cn_stock("data/stocklist.csv")
+    wgs=WhiteGuardStockCore('119.29.141.202',11111)
+    #wgs.init_cn_stock("data/stocklist.csv")
     #wgs.loop_all_cn_stocks('futu',30,0)
-    wgs.init_hk_stock("data/HSIIndexList.csv")
-    wgs.loop_all_stocks('futu',30,0) #0 沪深 #1 香港 #3美国
-    wgs.loop_all_stocks('futu',30,1) #0 沪深 #1 香港 #3美国
+    #wgs.init_hk_stock("data/HSIIndexList.csv")
     #wgs.get_stock_dmi_my_signal('HK.00700','2017-10-1','2018-06-1')
     #loop_all_stocks('HK.800000')
     #get_stock_kdj_buy_signal('HK.03883',30)
     #wgs.get_stock_dmi_my_signal_min('HK.02382',15)
+    wgs.get_everyday_schedule()
     wgs.clear_quote()
