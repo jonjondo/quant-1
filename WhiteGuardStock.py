@@ -20,6 +20,10 @@ class WhiteGuardStockCore:
         self.cn_stock_list = pb.read_csv(cn_stock_file_name,encoding='GBK')
     def init_hk_stock(self,hk_stock_file_name):
         self.hk_stock_list = pb.read_csv(hk_stock_file_name)
+
+    def init_us_stock(self,us_stock_file_name):
+        self.hk_stock_list = pb.read_csv(us_stock_file_name)
+
     def start_hk_market(self,trade_env):
         self.trade_ctx = OpenHKTradeContext(host=self.api_ip, port=self.api_port)
     def start_us_market(self,trade_env):
@@ -240,8 +244,16 @@ class WhiteGuardStockCore:
         print("---------------------------END-------------------------------")
         print(info.loc[info['KDJ'] == 1])
 
-    def loop_all_cn_stocks(self,data_source,days):
-        info = self.cn_stock_list
+    def loop_all_stocks(self,data_source,days,market):
+        if market == 0: #沪深
+            info = self.cn_stock_list
+        elif market == 1: #香港
+            info = self.hk_stock_list
+        elif market == 2:
+            info = self.us_stock_list
+        else:
+            info = self.cn_stock_list
+
         print("----------------------以下符合条件%s----------------------------"%(days))
         for EachStockID in info.code:
             if data_source == 'tushare':
@@ -252,9 +264,9 @@ class WhiteGuardStockCore:
                 #if is_cn_stock_break_high_from_futu(EachStockID,days):
                 if self.get_stock_kdj_buy_signal(EachStockID,days):
                     print("%s %s[KDJ金叉]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
-                    self.cn_stock_list.loc[(info.code == EachStockID),'KDJ']=1
+                    info.loc[(info.code == EachStockID),'KDJ']=1
                 if self.get_stock_ma_cross_signal(EachStockID,days):
-                    self.cn_stock_list.loc[(info.code == EachStockID),'MACROSS']=1
+                    info.loc[(info.code == EachStockID),'MACROSS']=1
                     print("%s %s[MA底部穿越]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
                 try:
                     df=self.get_stock_dmi_my_signal(EachStockID,'2018-1-1',time.strftime("%Y-%m-%d",time.localtime(time.time())))
@@ -264,15 +276,15 @@ class WhiteGuardStockCore:
                     #print(minaaj,minaaj_index,df.iat[-1,-1],stock_id)
                     #最新的AAJ小于0，且大于低谷，并且低谷就是近一段时间的最低值，确认反转
                     if df.iat[-1,-1] < -45 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj:
-                        self.cn_stock_list.loc[(info.code == EachStockID),'DMI2']=1
+                        info.loc[(info.code == EachStockID),'DMI2']=1
                         print("%s %s[DMI2反转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
                 except:
                     continue
         print("---------------------------END-------------------------------")
         print("----------------------KDJ金叉 MA穿越--------------------------")
-        print(self.cn_stock_list.loc[(info['KDJ'] == 1) & (info['MACROSS'] == 1) ])
+        print(info.loc[(info['KDJ'] == 1) & (info['MACROSS'] == 1) ])
         print("---------------------------DMI2买入指标-------------------------------")
-        print(self.cn_stock_list.loc[(info['DMI2'] == 1) & ((info['KDJ'] == 1) | (info['MACROSS'] == 1))])
+        print(info.loc[(info['DMI2'] == 1) & ((info['KDJ'] == 1) | (info['MACROSS'] == 1))])
 
 
     def get_stock_kdj_buy_signal(self,stock_id,days):
@@ -689,7 +701,10 @@ if __name__ == "__main__":
     #loop_all_hk_stocks_from_file("HSIIndexList.csv",60)
     wgs=WhiteGuardStockCore('192.168.0.105',11111)
     wgs.init_cn_stock("data/stocklist.csv")
-    wgs.loop_all_cn_stocks('futu',30)
+    #wgs.loop_all_cn_stocks('futu',30,0)
+    wgs.init_hk_stock("data/HSIIndexList.csv")
+    wgs.loop_all_stocks('futu',30,0) #0 沪深 #1 香港 #3美国
+    wgs.loop_all_stocks('futu',30,1) #0 沪深 #1 香港 #3美国
     #wgs.get_stock_dmi_my_signal('HK.00700','2017-10-1','2018-06-1')
     #loop_all_stocks('HK.800000')
     #get_stock_kdj_buy_signal('HK.03883',30)
