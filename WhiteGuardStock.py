@@ -712,29 +712,36 @@ class WhiteGuardStockCore:
         self.df_total = self.df_total.append(df)
         df_selected =wgs.df_total.loc[(wgs.df_total['DMI2'] == 1) & ((wgs.df_total['KDJ'] == 1) | (wgs.df_total['MACROSS'] == 1))]
         df_sell = wgs.df_total.loc[(wgs.df_total['DMI2'] == -1)]
-        print("------------------选中的-----------------------")
+        df_selected = df_selected[['id','code','stock_name']]
+        df_selected = df_selected.drop_duplicates(['code'])
+        print("--------------以下为今日选股-----------------")
         print(df_selected)
-        print("------------------结束------------------------")
-        df_selected.to_csv("data/schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv",columns=['id','code','stock_name'])
-        with open("data/storagelist.csv", 'rb') as f:
-                result = chardet.detect(f.read())
-                df_storage = pb.read_csv("data/storagelist.csv",encoding=result['encoding'],names = ['id','code','stock_name'])
+        print("------------------结束----------------------")
+
+        try:
+            df_selected.to_csv("data/schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv",columns=['code','stock_name'])
+            with open("data/storagelist.csv", 'rb') as f:
+                    result = chardet.detect(f.read())
+                    df_storage = pb.read_csv("data/storagelist.csv",encoding=result['encoding'])
+        except:
+            print("尝试写入文件%s失败，跳过...."%"data/schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv")
         #df_storage = pd.read_csv("data/storagelist.csv")
         df_storage=df_storage.append(df_selected)
-        #df_storage = df_storage.drop_duplicates(['code'])
+        df_storage = df_storage.drop_duplicates(['code'])
         df_storage_keep = df_storage[~(df_storage['code'].isin(df_sell['code']))]
+        df_storage_keep = df_storage_keep[['id','code','stock_name']]
         df_storage_to_sell = df_storage[(df_storage['code'].isin(df_sell['code']))]
         df_storage_keep.to_csv("data/storagelist.csv",columns=['id','code','stock_name'])
-        print("---------------------该卖的----------------------")
+        print("--------------以下持仓应该卖出-----------------")
         print(df_storage_to_sell)
-        print("----------------------结束-----------------------")
+        print("------------------结束-----------------------")
 
 
 
 if __name__ == "__main__":
     #draw_single_stock_MACD('HK.00700')
     #loop_all_hk_stocks_from_file("HSIIndexList.csv",60)
-    wgs=WhiteGuardStockCore('119.29.141.202',11111)
+    wgs=WhiteGuardStockCore('192.168.0.105',11111)
     #wgs.init_cn_stock("data/stocklist.csv")
     #wgs.loop_all_cn_stocks('futu',30,0)
     #wgs.init_hk_stock("data/HSIIndexList.csv")
