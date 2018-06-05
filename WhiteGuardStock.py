@@ -731,7 +731,7 @@ class WhiteGuardStockCore:
         df_storage_keep = df_storage[~(df_storage['code'].isin(df_sell['code']))]
         df_storage_keep = df_storage_keep[['id','code','stock_name']]
         df_storage_to_sell = df_storage[(df_storage['code'].isin(df_sell['code']))]
-        df_storage_keep.to_csv("data/storagelist.csv",columns=['id','code','stock_name'])
+        df_storage_keep.to_csv("data/storagelist.csv",columns=['code','stock_name'])
         print("--------------以下持仓应该卖出-----------------")
         print(df_storage_to_sell)
         print("------------------结束-----------------------")
