@@ -22,7 +22,7 @@ TRADA_ACTION_SELL=1
 test_mode = True
 LOCK_PASS= '851226'
 TIME_K = 5
-TRADE_LIST=['HK.62671','HK.00371','HK.00700']
+TRADE_LIST=['HK.58912','HK.14328','HK.58965','HK.01088','HK.01728','HK.02342']
 
 
 
@@ -72,8 +72,7 @@ class AutoFutuTrade:
                  #买，每次5000块钱的，要计算一下
                  ret_code,ret_data = self.make_buy_order(LOCK_PASS,stock_id,TRADE_ENV,TRADA_ACTION_BUY,5000)
                  logger.info(ret_data)
-                 if ret_code == 0:
-                    self.last_buy_point = minaaj
+                 self.last_buy_point = minaaj
             # #在这里决策要不要买卖,粗暴点，把持仓扫一遍
             #if df.iat[-1,-1] > 0 and df.iat[-2,-1] > df.iat[-1,-1]:
             else:
@@ -101,7 +100,7 @@ class AutoFutuTrade:
                     print("[%s] [%s] 触发卖出条件,AAJ为%s 索引为%d"%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),df.iloc[i]['code'],df_dmi.iat[-1,-1],maxaaj_index))
                     logger.info("[%s] 触发卖出条件,AAJ为%s 索引为%d"%(df.iloc[i]['code'],df_dmi.iat[-1,-1],maxaaj_index))
                     #卖出可售数量的一半
-                    ret_code,ret_data = self.wgs.open_trade_make_order(LOCK_PASS,df.iloc[i]['code'],trade_env,order_side,int(df.iloc[i]['can_sell_qty'])/int(df.iloc[i]['qty'])/2)
+                    ret_code,ret_data = self.wgs.open_trade_make_order(LOCK_PASS,df.iloc[i]['code'],trade_env,order_side,int(df.iloc[i]['can_sell_qty'])/int(df.iloc[i]['qty']))
                     logger.info(ret_data)
                     if ret_code == 0:
                         self.last_sell_point = maxaaj
