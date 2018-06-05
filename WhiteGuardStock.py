@@ -9,22 +9,23 @@ import pandas as pb
 import matplotlib.dates as mdate
 import matplotlib.ticker as ticker
 
-api_ip = '192.168.0.104'#'119.29.141.202'这里要使用本地客户端
-api_port = 11111
+
 
 class WhiteGuardStockCore:
-    def __init__(self):
-        self.quote_ctx = OpenQuoteContext(api_ip, api_port)
+    def __init__(self,dst_ip = '127.0.0.1',dst_port = 11111):
+        self.api_ip = dst_ip
+        self.api_port = dst_port
+        self.quote_ctx = OpenQuoteContext(self.api_ip, self.api_port)
     def init_cn_stock(self,cn_stock_file_name):
         self.cn_stock_list = pb.read_csv(cn_stock_file_name,encoding='GBK')
     def init_hk_stock(self,hk_stock_file_name):
         self.hk_stock_list = pb.read_csv(hk_stock_file_name)
     def start_hk_market(self,trade_env):
-        self.trade_ctx = OpenHKTradeContext(host=api_ip, port=api_port)
+        self.trade_ctx = OpenHKTradeContext(host=self.api_ip, port=self.api_port)
     def start_us_market(self,trade_env):
         if trade_env != 0:
             raise Exception("美股交易接口不支持仿真环境")
-        self.trade_ctx = OpenUSTradeContext(host=api_ip, port=api_port)
+        self.trade_ctx = OpenUSTradeContext(host=self.api_ip, port=self.api_port)
     def clear_quote(self):
         self.quote_ctx.close()
 
@@ -197,7 +198,7 @@ class WhiteGuardStockCore:
         return ret, data_frame
 
     def loop_all_stocks(self,index_code):
-        ret,info = self.get_index_stocks(api_ip, api_port, index_code)
+        ret,info = self.get_index_stocks(self.api_ip, self.api_port, index_code)
         print(info)
         for EachStockID in info.code:
              if self.is_hk_stock_break_high(EachStockID,60):
@@ -250,28 +251,28 @@ class WhiteGuardStockCore:
             elif data_source == 'futu':
                 #if is_cn_stock_break_high_from_futu(EachStockID,days):
                 if self.get_stock_kdj_buy_signal(EachStockID,days):
-                    print("%s %s"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
+                    print("%s %s[KDJ金叉]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
                     self.cn_stock_list.loc[(info.code == EachStockID),'KDJ']=1
                 if self.get_stock_ma_cross_signal(EachStockID,days):
                     self.cn_stock_list.loc[(info.code == EachStockID),'MACROSS']=1
+                    print("%s %s[MA底部穿越]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
                 try:
                     df=self.get_stock_dmi_my_signal(EachStockID,'2018-1-1',time.strftime("%Y-%m-%d",time.localtime(time.time())))
                     #print(df)
-                    #在这里决策要不要买,粗暴点，AAJ小于多少才买,且算AJJ是不是出了底部拐点。
-
                     minaaj = ta.MIN(df['AAJ'].values[:-1], timeperiod=12)[-1]
-                    minaaj_index = ta.MININDEX(df['AAJ'].values[:-1], timeperiod=12)[-1]
+                    #minaaj_index = ta.MININDEX(df['AAJ'].values[:-1], timeperiod=12)[-1]
                     #print(minaaj,minaaj_index,df.iat[-1,-1],stock_id)
                     #最新的AAJ小于0，且大于低谷，并且低谷就是近一段时间的最低值，确认反转
                     if df.iat[-1,-1] < -45 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj:
                         self.cn_stock_list.loc[(info.code == EachStockID),'DMI2']=1
+                        print("%s %s[DMI2反转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
                 except:
                     continue
         print("---------------------------END-------------------------------")
         print("----------------------KDJ金叉 MA穿越--------------------------")
         print(self.cn_stock_list.loc[(info['KDJ'] == 1) & (info['MACROSS'] == 1) ])
         print("---------------------------DMI2买入指标-------------------------------")
-        print(self.cn_stock_list.loc[(info['DMI2'] == 1)])
+        print(self.cn_stock_list.loc[(info['DMI2'] == 1) & ((info['KDJ'] == 1) | (info['MACROSS'] == 1))])
 
 
     def get_stock_kdj_buy_signal(self,stock_id,days):
@@ -418,7 +419,7 @@ class WhiteGuardStockCore:
                 df['PDI']=df['NPDM']/df['NTR']*100
                 df['MDI']=df['NMDM']/df['NTR']*100
 
-            #df.to_csv("dmi2.csv")
+
             #df['DX']=abs(df['MDI']-df['PDI'])/(df['MDI']+df['PDI'])*100
             #ADX0:=EMA((DMP-DMM)/(DMP+DMM)*100,M);
             #ADXR0:=EMA(ADX0,M);
@@ -686,7 +687,7 @@ class WhiteGuardStockCore:
 if __name__ == "__main__":
     #draw_single_stock_MACD('HK.00700')
     #loop_all_hk_stocks_from_file("HSIIndexList.csv",60)
-    wgs=WhiteGuardStockCore()
+    wgs=WhiteGuardStockCore('192.168.0.105',11111)
     wgs.init_cn_stock("data/stocklist.csv")
     wgs.loop_all_cn_stocks('futu',30)
     #wgs.get_stock_dmi_my_signal('HK.00700','2017-10-1','2018-06-1')
