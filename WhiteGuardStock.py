@@ -33,6 +33,9 @@ class WhiteGuardStockCore:
     def clear_quote(self):
         self.quote_ctx.close()
 
+    def __del__(self):
+        self.quote_ctx.close()
+
 
 
 
