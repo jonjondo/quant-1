@@ -338,8 +338,15 @@ class WhiteGuardStockCore:
     def get_stock_macd_buy_signal(self,stock_id,days):
         pass
     def get_stock_ma_cross_signal(self,stock_id,days):
+        end_day=datetime.date(datetime.date.today().year,datetime.date.today().month,datetime.date.today().day)
+        days=days*7/5
+        #考虑到周六日非交易
+        start_day=end_day-datetime.timedelta(days)
+
+        start_day=start_day.strftime("%Y-%m-%d")
+        end_day=end_day.strftime("%Y-%m-%d")
         try:
-            ret, df = self.quote_ctx.get_history_kline(stock_id, start='2018-01-01',end='2018-05-18', ktype='K_DAY', autype='qfq')  # 获取历史K线
+            ret, df = self.quote_ctx.get_history_kline(stock_id, start=start_day,end=end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
             if not df.empty:
             #提取收盘价
                 closed=df['close'].values

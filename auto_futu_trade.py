@@ -68,7 +68,8 @@ class AutoFutuTrade:
                  print("[%s] [%s] 触发买入条件,AAJ为%s 索引为%d"%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),stock_id,df.iat[-1,-1],minaaj_index))
                  logger.info("[%s] 触发买入条件,AAJ为%s 索引为%d"%(stock_id,df.iat[-1,-1],minaaj_index))
                  #买，每次5000块钱的
-                 ret_code,ret_data = self.make_buy_order(LOCK_PASS,stock_id,TRADE_ENV,TRADA_ACTION_BUY,self.df_snapshot.loc[(self.df_snapshot['code'] == stock_id),['lot_size']].values[0],5000)
+                 #ret_code,ret_data = self.make_buy_order(LOCK_PASS,stock_id,TRADE_ENV,TRADA_ACTION_BUY,self.df_snapshot.loc[(self.df_snapshot['code'] == stock_id),['lot_size']].values[0],5000)
+                 ret_code,ret_data = self.make_buy_order(LOCK_PASS,stock_id,TRADE_ENV,TRADA_ACTION_BUY,0,5000)
                  logger.info(ret_data)
                  self.last_buy_point = minaaj
             # #在这里决策要不要买卖,粗暴点，把持仓扫一遍
@@ -102,7 +103,8 @@ class AutoFutuTrade:
                     #,ret_data = self.wgs.open_trade_make_order(LOCK_PASS,df.iloc[i]['code'],trade_env,order_side,int(float(df.iloc[i]['can_sell_qty'])/float(df.iloc[i]['qty'])/2))
                     sell_count = int(int(df.iloc[i]['can_sell_qty'])/int(df.iloc[i]['qty'])/2)
                     sell_count = sell_count if sell_count > 1 else 1
-                    ret_code,ret_data = self.wgs.open_trade_make_order(LOCK_PASS,df.iloc[i]['code'],trade_env,order_side,self.df_snapshot.loc[(self.df_snapshot['code'] == df.iloc[i]['code']),['lot_size']].values[0],sell_count)
+                    #ret_code,ret_data = self.wgs.open_trade_make_order(LOCK_PASS,df.iloc[i]['code'],trade_env,order_side,self.df_snapshot.loc[(self.df_snapshot['code'] == df.iloc[i]['code']),['lot_size']].values[0],sell_count)
+                    ret_code,ret_data = self.wgs.open_trade_make_order(LOCK_PASS,df.iloc[i]['code'],trade_env,order_side,0,sell_count)
                     logger.info(ret_data)
                     if ret_code == 0:
                         self.last_sell_point = maxaaj
