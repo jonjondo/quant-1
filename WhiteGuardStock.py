@@ -596,7 +596,7 @@ class WhiteGuardStockCore:
 
         return  dfret
 
-    def open_trade_make_order(self,unlock_password, stock_id, trade_env,order_side,stock_size):
+    def open_trade_make_order(self,unlock_password, stock_id, trade_env,order_side,lot_size,stock_size):
         if unlock_password == "":
             raise Exception("请先配置交易解锁密码!")
         #quote_ctx = OpenQuoteContext(host=api_ip, port=api_port)  # 创建行情api
@@ -686,6 +686,8 @@ class WhiteGuardStockCore:
 
             # 下单
             order_id = 0
+            #ret_data = "[%s] [%s]尝试下%s，单价:%f 数量%d 每手%d股,金额%f HK$,单号为%s"%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),stock_id,typestr,price,qty,lot_size,price*qty,order_id)
+            #print(ret_data)
             ret_code, ret_data = self.trade_ctx.place_order(price=price, qty=qty, strcode=stock_id, orderside=order_side,
                                                        ordertype=order_type, envtype=trade_env)
             is_fire_trade = True
@@ -700,6 +702,16 @@ class WhiteGuardStockCore:
     def get_current_position_list(self,trade_env):
         ret_code, ret_data = self.trade_ctx.position_list_query(strcode='', stocktype='', pl_ratio_min='', pl_ratio_max='', envtype=trade_env)
         return  ret_data
+    #获取每手信息有频率限制，计划一次全获取
+    def get_current_trade_list_info(self,stocklist):
+        while True:
+            ret, data = self.quote_ctx.get_market_snapshot(stocklist)
+            #lot_size = data.iloc[0]['lot_size'] if ret == 0 else 0
+            if ret != 0:
+                print("取不到每手信息，错误码%d 错误信息 %s重试中!"%(ret,data))
+            else:
+                break;
+        return ret,data
 
     #获取每天的策略，该买啥卖啥
     def get_everyday_schedule(self):
