@@ -736,14 +736,14 @@ class WhiteGuardStockCore:
         print("--------------以下为今日选股-----------------")
         print(df_selected)
         print("------------------结束----------------------")
-
+        df_storage =pd.DataFrame()
         try:
             df_selected.to_csv("data/schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv",columns=['code','stock_name'])
             with open("data/storagelist.csv", 'rb') as f:
                     result = chardet.detect(f.read())
                     df_storage = pb.read_csv("data/storagelist.csv",encoding=result['encoding'])
         except:
-            print("尝试写入文件%s失败，跳过...."%"data/schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv")
+            print("尝试写入文件%s失败，跳过...."%("data/schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv"))
         #df_storage = pd.read_csv("data/storagelist.csv")
         df_storage=df_storage.append(df_selected)
         df_storage = df_storage.drop_duplicates(['code'])
@@ -760,7 +760,7 @@ class WhiteGuardStockCore:
 if __name__ == "__main__":
     #draw_single_stock_MACD('HK.00700')
     #loop_all_hk_stocks_from_file("HSIIndexList.csv",60)
-    wgs=WhiteGuardStockCore('192.168.0.105',11111)
+    wgs=WhiteGuardStockCore()
     #wgs.init_cn_stock("data/stocklist.csv")
     #wgs.loop_all_cn_stocks('futu',30,0)
     #wgs.init_hk_stock("data/HSIIndexList.csv")
