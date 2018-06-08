@@ -381,39 +381,92 @@ class WhiteGuardStockCore:
                 stock_data['KDJ_J'] = 3 * stock_data['KDJ_K'] - 2 * stock_data['KDJ_D']
                 # 计算KDJ指标金叉、死叉情况
                 stock_data['KDJ_金叉死叉'] = ''
-                kdj_position_gold = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_K'] <= 25)|(stock_data['KDJ_J'] < 0)
+                kdj_position_gold = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_K'] <= 15)|(stock_data['KDJ_J'] < 0)
                 kdj_position_die = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_D'] > 75 )
                 stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index, 'KDJ_金叉死叉'] = 1
-                #stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index - 1, 'KDJ_金叉死叉'] = 1
-                #stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index - 2, 'KDJ_金叉死叉'] = 1
-                ##stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index + 1, 'KDJ_金叉死叉'] = 1
-                #stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index + 2, 'KDJ_金叉死叉'] = 1
+                try:
+                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index - 1, 'KDJ_金叉死叉'] = 1
+                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index - 2, 'KDJ_金叉死叉'] = 1
+                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index + 1, 'KDJ_金叉死叉'] = 1
+                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index + 2, 'KDJ_金叉死叉'] = 1
+                except:
+                    pass
                 stock_data.loc[kdj_position_die[(kdj_position_die == False) & (kdj_position_die.shift() == True)].index, 'KDJ_金叉死叉'] = -1
 
                 #计算MA指标
-                # closed=stock_data['close'].values
-                #  #获取均线的数据，通过timeperiod参数来分别获取 5,10,20 日均线的数据。
-                # stock_data['MA5']=ta.SMA(closed,timeperiod=5)
-                # stock_data['MA10']=ta.SMA(closed,timeperiod=10)
-                # stock_data['MA20']=ta.SMA(closed,timeperiod=20)
+                closed=stock_data['close'].values
+                #获取均线的数据，通过timeperiod参数来分别获取 5,10,20 日均线的数据。
+                stock_data['MA5']=ta.SMA(closed,timeperiod=5)
+                stock_data['MA10']=ta.SMA(closed,timeperiod=10)
+                stock_data['MA20']=ta.SMA(closed,timeperiod=20)
+                # ma_positon_gold = (stock_data['MA5'] > stock_data['MA10']) & (stock_data['close'] > stock_data['MA20'])
+                # stock_data.loc[ma_positon_gold[(ma_positon_gold == True) & (ma_positon_gold.shift() == False)].index,'MA_CROSS'] = 1
+                # try:
+                #     stock_data.loc[ma_positon_gold[(ma_positon_gold == True) & (ma_positon_gold.shift() == False)].index-1,'MA_CROSS'] = 1
+                #     stock_data.loc[ma_positon_gold[(ma_positon_gold == True) & (ma_positon_gold.shift() == False)].index-2,'MA_CROSS'] = 1
+                #     stock_data.loc[ma_positon_gold[(ma_positon_gold == True) & (ma_positon_gold.shift() == False)].index+1,'MA_CROSS'] = 1
+                #     stock_data.loc[ma_positon_gold[(ma_positon_gold == True) & (ma_positon_gold.shift() == False)].index+2,'MA_CROSS'] = 1
+                #     stock_data.loc[ma_positon_gold[(ma_positon_gold == True) & (ma_positon_gold.shift() == False)].index+3,'MA_CROSS'] = 1
+                # except:
+                #     pass
 
+                for pos in range(3,len(stock_data.index)-4):
+                        if (stock_data.iloc[-pos]['MA5'] - stock_data.iloc[-pos]['MA10'] < 1)  and (stock_data.iloc[-pos]['MA5'] - stock_data.iloc[-pos]['MA10'] > 0) and (stock_data.iloc[-pos-1]['MA5'] - stock_data.iloc[-pos-1]['MA10'] < 0):
+                            #print("%s 倒数第%s日 MA5:%s 穿越 MA10:%s"%(stock_id,pos,df.iloc[-pos]['MA5'],df.iloc[-pos]['MA10']))
+                            stock_data.loc[pos,'MA_CROSS'] = 1
+                            stock_data.loc[pos-1,'MA_CROSS'] = 1
+                            stock_data.loc[pos-2,'MA_CROSS'] = 1
+                            stock_data.loc[pos+1,'MA_CROSS'] = 1
+                            stock_data.loc[pos+2,'MA_CROSS'] = 1
 
-
-                # for pos in range(3,len(stock_data.index)):
-                #     if (stock_data.iloc[-pos]['MA5'] - stock_data.iloc[-pos]['MA10'] < 1)  and (stock_data.iloc[-pos]['MA5'] - stock_data.iloc[-pos]['MA10'] > 0) and (stock_data.iloc[-pos-1]['MA5'] - stock_data.iloc[-pos-1]['MA10'] < 0):
-                #             #print("%s 倒数第%s日 MA5:%s 穿越 MA10:%s"%(stock_id,pos,df.iloc[-pos]['MA5'],df.iloc[-pos]['MA10']))
-                #         stock_data_cp.iloc[-pos-1]['MA穿越'] = 1
-                #         stock_data_cp.iloc[-pos-2]['MA穿越'] = 1
-                #         stock_data_cp.iloc[-pos+1]['MA穿越'] = 1
-                #         stock_data_cp.iloc[-pos+2]['MA穿越'] = 1
-                #
-                #
-
-                stock_data.to_csv("KDJ.csv", index=True, sep=',')
-
+                #计算DMI2
+                N,MM=14,6
+                high=stock_data['high']
+                low=stock_data['low']
+                close=stock_data['close']
+                df = pd.DataFrame()
+                df['h-l']=high-low
+                df['h-c']=abs(high-close.shift(1))
+                df['l-c']=abs(close.shift(1)-low)
+                df['tr']=df.max(axis=1)
+                df['PDM']=high-high.shift(1)
+                df['MDM']=low.shift(1)-low
+                df['DPD']=0
+                df['DMD']=0
+                for i in range(len(df.index)):
+                    PDM=df.ix[i,'PDM']
+                    MDM=df.ix[i,'MDM']
+                    if PDM<0 or PDM<MDM:
+                        df.ix[i,'DPD']=0
+                    else:
+                        df.ix[i,'DPD']=PDM
+                    if MDM<0 or MDM<PDM:
+                        df.ix[i,'DMD']=0
+                    else:
+                        df.ix[i,'DMD']=MDM
+                #下面这段是原先的代码，先注释掉吧
+                df['NTR']=ta.EMA(df['tr'],N)
+                df['NPDM']=ta.EMA(df['DPD'],N)
+                df['NMDM']=ta.EMA(df['DMD'],N)
+                df['PDI']=df['NPDM']/df['NTR']*100
+                df['MDI']=df['NMDM']/df['NTR']*100
+                ##下面这段是原先的代码，先注释掉吧
+                df['DX']=ta.EMA((df['NPDM']-df['NMDM'])/(df['NMDM']+df['NPDM'])*100,MM)
+                df['ADX']=df['DX']
+                df['ADXR']=ta.EMA(df['ADX'],MM)
+                df['AAJ'] =0
+                df['AAJ'] = ta.EMA(3*df['ADX']-2*df['ADXR'],2)
+                df['AAJ_FLAG'] =0
+                #算好了拼一下
+                stock_data = pd.concat([stock_data, df], axis=1)
+                for pos in range(3,len(stock_data.index)  - 1):
+                    if (stock_data.iloc[pos]['AAJ'] - stock_data.iloc[pos-1]['AAJ'] < 0)  and (stock_data.iloc[pos]['AAJ'] - stock_data.iloc[pos+1]['AAJ'] < 0 and stock_data.iloc[pos]['AAJ'] < 0):
+                        stock_data.loc[pos,'AAJ_FLAG'] = 1
+                #stock_data.to_csv("KDJ.csv", index=True, sep=',')
+                return  stock_data
         except Exception as e:
-            print("%s 错误：%s 返回结果%s in %s"% (stock_data['code'],e,stock_data,"get_stock_kdj_buy_signal"))
-            return  False
+            print("%s 错误：%s 返回结果%s in %s"% (stock_data['code'],e,stock_data,"get_stock_my_schedule_signal"))
+            return  stock_data
 
 
     def get_stock_dmi_ta_signal(self,stock_id,days):
@@ -810,25 +863,30 @@ class WhiteGuardStockCore:
         end_day=datetime.date(datetime.date.today().year,datetime.date.today().month,datetime.date.today().day)
         end_day=end_day.strftime("%Y-%m-%d")
         all_stock = pd.DataFrame()
-        #for code in self.final_selected_stock['code']:
-        ret,stock_data=self.quote_ctx.get_history_kline('HK.02382',start='2017-01-01',end=end_day,ktype='K_DAY', autype='qfq')
-        df=self.get_stock_my_schedule_signal(stock_data)
+        for code in self.cn_stock_list['code']:
+            print("[%s]正在处理%s....."%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),code))
+            ret,stock_data=self.quote_ctx.get_history_kline(code,start='2017-01-01',end=end_day,ktype='K_DAY', autype='qfq')
+            df=self.get_stock_my_schedule_signal(stock_data)
+            #print(df)
+            for n in [1, 2, 3, 5, 10, 20]:
+                df['接下来'+str(n)+'个交易日涨跌幅'] =df['close'].shift(-1*n) / df['close'] - 1.0
+            df.dropna(how='any', inplace=True)# 删除所有有空值的数据行
 
-        for n in [1, 2, 3, 5, 10, 20]:
-            df['接下来'+str(n)+'个交易日涨跌幅'] = df['close'].shift(-1*n) / df['close'] - 1.0
-        df.dropna(how='any', inplace=True)# 删除所有有空值的数据行
+            # 筛选出符合条件的数据，并将这些数据合并到all_stock中
+            try:
+                stock_data = df[(df['KDJ_金叉死叉'] == 1) & df['AAJ_FLAG'] == 1]
+            except:
+                continue
 
-        # 筛选出KDJ金叉的数据，并将这些数据合并到all_stock中
-        stock_data = df[(self.final_selected_stock['KDJ_金叉死叉'] == 1)]
-        if stock_data.empty:
-            pass
-        all_stock = all_stock.append(stock_data, ignore_index=True)
-
+            if stock_data.empty:
+                pass
+            all_stock = all_stock.append(stock_data, ignore_index=True)
+        all_stock.to_csv("data/回测数据.csv", index=True, sep=',')
         # ========== 根据上一步得到的所有股票KDJ金叉数据all_stock，统计这些股票在未来交易日中的收益情况
-        print('历史上所有股票出现KDJ金叉的次数为%d，这些股票在：' %all_stock.shape[0])
+        print('所选择股票清单中符合条件的股票收益统计如下，一共%s，这些股票在：' %all_stock.shape[0])
 
         for n in [1, 2, 3, 5, 10, 20]:
-            print("金叉之后的%d个交易日内，" % n),
+            print("条件触发之后的%d个交易日内，" % n),
             print("平均涨幅为%.2f%%，" % (all_stock['接下来'+str(n)+'个交易日涨跌幅'].mean() * 100)),
             print("其中上涨股票的比例是%.2f%%。" % \
                   (all_stock[all_stock['接下来'+str(n)+'个交易日涨跌幅'] > 0].shape[0]/float(all_stock.shape[0]) * 100))
@@ -840,7 +898,7 @@ if __name__ == "__main__":
     #loop_all_hk_stocks_from_file("HSIIndexList.csv",60)
     wgs=WhiteGuardStockCore()
     #wgs=WhiteGuardStockCore('119.29.141.202',11111)
-    #wgs.init_cn_stock("data/stocklist.csv")
+    wgs.init_cn_stock("data/stocklist.csv")
     #wgs.loop_all_cn_stocks('futu',30,0)
     #wgs.init_hk_stock("data/HSIIndexList.csv")
     #wgs.get_stock_dmi_my_signal('HK.00700','2017-10-1','2018-06-1')
@@ -848,7 +906,7 @@ if __name__ == "__main__":
     #get_stock_kdj_buy_signal('HK.03883',30)
     #wgs.get_stock_dmi_my_signal_min('HK.02382',15)
     #每日运行选股
-    wgs.get_everyday_schedule()
+    #wgs.get_everyday_schedule()
     #回测功能
-    #wgs.calculate_rate_of_my_schedule()
+    wgs.calculate_rate_of_my_schedule()
     wgs.clear_quote()
