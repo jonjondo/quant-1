@@ -417,10 +417,12 @@ class WhiteGuardStockCore:
 
                 stock_data['MACD_DIS'] = stock_data.apply(lambda stock_data:cal_c(stock_data['MACD'],stock_data['MACDsignal']), axis=1)#abs(stock_data['MACDsignal'] - stock_data['MACD'])/abs(stock_data['MACDsignal'])
                 #macd_postion= (stock_data['MACD'] > stock_data['MACDsignal'])
-                macd_postion= (stock_data['MACD'] < stock_data['MACDsignal']) & (stock_data['MACD_DIS'] <= 0.45) & (stock_data['MACD'] > stock_data['MACD'].shift())
+                macd_postion= (stock_data['MACD'] < stock_data['MACDsignal']) & (stock_data['MACD_DIS'] < 0.45) & (stock_data['MACD'] > stock_data['MACD'].shift())
                 try:
                     stock_data.loc[macd_postion[(macd_postion == True) & (macd_postion.shift() == False)].index, 'MACD_CROSS'] = 1
                     stock_data.loc[macd_postion[(macd_postion == True) & (macd_postion.shift() == False)].index-1, 'MACD_CROSS'] = 2
+                    stock_data.loc[macd_postion[(macd_postion == True) & (macd_postion.shift() == False)].index-2, 'MACD_CROSS'] = 3
+                    stock_data.loc[macd_postion[(macd_postion == True) & (macd_postion.shift() == False)].index-3, 'MACD_CROSS'] = 4
                 except:
                     pass
                 #print(stock_data)
@@ -428,7 +430,7 @@ class WhiteGuardStockCore:
                     #这里写策略，穿越策略,如果五日内有发现置1了
                     for pos in range(5):
                         if stock_data.iloc[-pos]['MACD_CROSS'] >=1:
-                            print("%s 倒数第%s日 MACD_CROSS:%s 穿越"%(stock_id,pos,stock_data.iloc[-pos]['time_key']))
+                            print("%s 倒数第%s日 MACD_CROSS:%s 趋势穿越"%(stock_id,pos,stock_data.iloc[-pos]['time_key']))
                             return  True
                         if pos >= len(stock_data.index):
                             return  False
@@ -451,7 +453,7 @@ class WhiteGuardStockCore:
                 stock_data['KDJ_J'] = 3 * stock_data['KDJ_K'] - 2 * stock_data['KDJ_D']
                 # 计算KDJ指标金叉、死叉情况
                 stock_data['KDJ_金叉死叉'] = ''
-                kdj_position_gold = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_K'] <= 15)|(stock_data['KDJ_J'] < 0)
+                kdj_position_gold = (stock_data['KDJ_K'] > stock_data['KDJ_D']) #& (stock_data['KDJ_K'] <= 15)|(stock_data['KDJ_J'] < 0)去掉试试
                 kdj_position_die = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_D'] > 75 )
                 stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index, 'KDJ_金叉死叉'] = 1
                 try:
@@ -509,8 +511,9 @@ class WhiteGuardStockCore:
                         return abs(abs(b)-abs(a))/abs(b)
 
                 stock_data['MACD_DIS'] = stock_data.apply(lambda stock_data:cal_c(stock_data['MACD'],stock_data['MACDsignal']), axis=1)#abs(stock_data['MACDsignal'] - stock_data['MACD'])/abs(stock_data['MACDsignal'])
-                macd_postion= (stock_data['MACD'] > stock_data['MACDsignal'])
-                #macd_postion= (stock_data['MACD'] < stock_data['MACDsignal']) & (stock_data['MACD_DIS'] < 0.20)
+                #macd_postion= (stock_data['MACD'] > stock_data['MACDsignal'])
+                #macd_postion= (stock_data['MACD'] < stock_data['MACDsignal']) & (stock_data['MACD_DIS'] < 0.20) #
+                macd_postion = (stock_data['MACD'] < stock_data['MACDsignal']) & (stock_data['MACD_DIS'] >= 0.5) & (stock_data['MACD'] > stock_data['MACD'].shift()) #大于这个都是暴涨的
                 try:
                     stock_data.loc[macd_postion[(macd_postion == True) & (macd_postion.shift() == False)].index, 'MACD_CROSS'] = 1
                     stock_data.loc[macd_postion[(macd_postion == True) & (macd_postion.shift() == False)].index-1, 'MACD_CROSS'] = 2
@@ -932,7 +935,7 @@ class WhiteGuardStockCore:
         self.df_total = self.df_total.append(df)
         df = self.loop_all_stocks('futu',30,1) #0 沪深 #1 香港 #3美国
         self.df_total = self.df_total.append(df)
-        df_selected =wgs.df_total.loc[(wgs.df_total['DMI2'] == 1) & (wgs.df_total['MACD'] == 1)]
+        df_selected =wgs.df_total.loc[(wgs.df_total['DMI2'] == 1) & (wgs.df_total['MACD'] >= 1)]
         df_sell = wgs.df_total.loc[(wgs.df_total['DMI2'] == -1)]
         df_selected = df_selected[['id','code','stock_name']]
         df_selected = df_selected.drop_duplicates(['code'])
@@ -963,9 +966,13 @@ class WhiteGuardStockCore:
         end_day=datetime.date(datetime.date.today().year,datetime.date.today().month,datetime.date.today().day)
         end_day=end_day.strftime("%Y-%m-%d")
         all_stock = pd.DataFrame()
+        progress = 0
         for code in self.cn_stock_list['code']:
-            print("[%s]正在处理%s....."%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),code))
+            progress = progress + 1
+            print("[%s]正在处理%s.....进度%d%"%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),code,progress/len(self.cn_stock_list.index)*100))
             ret,stock_data=self.quote_ctx.get_history_kline(code,start='2017-01-01',end=end_day,ktype='K_DAY', autype='qfq')
+            if stock_data.empty:
+                continue
             df=self.get_stock_my_schedule_signal(stock_data)
             #print(df)
             for n in [1, 2, 3, 5, 10, 20]:
@@ -975,7 +982,11 @@ class WhiteGuardStockCore:
             # 筛选出符合条件的数据，并将这些数据合并到all_stock中
             try:
                 #stock_data = df[(((df['MACD_CROSS'] == 3 & df['MACD_DIS'] <= 0.3) |(df['MACD_CROSS'] == 4 & df['MACD_DIS'] <= 0.4)) & (df['AAJ_FLAG'] == 1))]
-                stock_data = df[(df['MACD_CROSS'] >= 3)  & (df['MACD_DIS'] <= 0.5) & (df['AAJ_FLAG'] == 1)]
+                #stock_data = df[(df['MACD_CROSS'] >= 3)  & (df['MACD_DIS'] <= 0.5) & (df['AAJ_FLAG'] == 1)]
+                #macd_postion= (stock_data['MACD'] < stock_data['MACDsignal']) & (stock_data['MACD_DIS'] <= 0.45) & (stock_data['MACD'] > stock_data['MACD'].shift())
+                stock_data = df[(df['MACD_CROSS'] >= 1) & (df['AAJ_FLAG'] == 1)]
+                stock_data2 = df[(df['KDJ_金叉死叉'] == 1) & (df['AAJ_FLAG'] == 1)]
+                stock_data = pd.merge(stock_data,stock_data2,how='left')
             except:
                 continue
 
@@ -1000,7 +1011,7 @@ if __name__ == "__main__":
     #wgs=WhiteGuardStockCore()
     #wgs=WhiteGuardStockCore('119.29.141.202',11111)
     wgs=WhiteGuardStockCore('192.168.0.106',11111)
-    #wgs.init_cn_stock("data/stocklist.csv")
+    #wgs.init_cn_stock("data/stocklistbasic.csv")
     #wgs.loop_all_cn_stocks('futu',30,0)
     #wgs.init_hk_stock("data/HSIIndexList.csv")
     #wgs.get_stock_dmi_my_signal('HK.00700','2017-10-1','2018-06-1')
