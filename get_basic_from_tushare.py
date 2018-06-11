@@ -277,7 +277,7 @@ if __name__ == "__main__":
     #loop_all_stocks()
     #df = ts.get_stock_basics()
     #df.to_csv("data/hsbasic/stocklistbasic.csv", index=True, sep=',')
-    for i in range(1,6):
+    for i in range(0,6):
         get_basic_detail_by_history(i+1,2015,2019)
     #get_basic_detail_by_quater(2018,1)
 
