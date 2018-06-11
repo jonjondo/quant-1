@@ -3,6 +3,9 @@ import tushare as ts
 import talib as ta
 import matplotlib.pyplot as plt
 import datetime
+import pandas as pd
+
+
 info=ts.get_stock_basics()
 def get_all_stock_id():
     #获取所有股票代码
@@ -75,6 +78,7 @@ def is_break_high(stockID,days):
 def get_basic_detail_by_history(info_type,start_year,end_year):
     if info_type == 1:
         print("---------获取业绩报告主表----------\n")
+        df_report= pd.DataFrame()
         for i in range(start_year,end_year):
             for j in range(4):
                 year = i
@@ -82,14 +86,25 @@ def get_basic_detail_by_history(info_type,start_year,end_year):
                 try:
                     df = ts.get_report_data(year,quater)
                     if not df.empty:
+                        df['year'] = i
+                        df['quanter']=j+1
                         ret_file_name = "data/hsbasic/cnstockquaterreport"+str(year)+"q"+str(quater)+".csv"
                         df.to_csv(ret_file_name, index=True, sep=',')
                         print("file %s saved" %ret_file_name)
+                        df_report = df_report.append(df)
+                except OSError:
+                    break;
                 except Exception as e:
                     print("报告主表发生错误%s"%e.messagme)
                     break;
+        total_file_name = "data/hsbasic/cnstockquaterreporttotal.csv"
+        print("******* file %s saved *******" %total_file_name)
+        df_report.reindex()
+        df_report.to_csv(total_file_name, index=True, sep=',')
+
     elif info_type == 2:
         print("---------获取盈利能力----------\n")
+        df_report= pd.DataFrame()
         for i in range(start_year,end_year):
             for j in range(4):
                 year = i
@@ -97,14 +112,25 @@ def get_basic_detail_by_history(info_type,start_year,end_year):
                 try:
                     df = ts.get_profit_data(year,quater)
                     if not df.empty:
+                        df['year'] = i
+                        df['quanter']=j+1
                         ret_file_name = "data/hsbasic/cnstockbenefitability"+str(year)+"q"+str(quater)+".csv"
                         df.to_csv(ret_file_name, index=True, sep=',')
                         print("file %s saved" %ret_file_name)
+                        df_report = df_report.append(df)
+                except OSError:
+                    break;
                 except Exception as e:
                     print("盈利能力发生错误%s"%e.messagme)
                     break;
+        total_file_name = "data/hsbasic/cnstockbenefitabilitytotal.csv"
+        print("******* file %s saved *******" %total_file_name)
+        df_report.reindex()
+        df_report.to_csv(total_file_name, index=True, sep=',')
+
     elif info_type == 3:
         print("---------获取营运能力----------\n")
+        df_report= pd.DataFrame()
         for i in range(start_year,end_year):
             for j in range(4):
                 year = i
@@ -112,14 +138,25 @@ def get_basic_detail_by_history(info_type,start_year,end_year):
                 try:
                     df = ts.get_operation_data(year,quater)
                     if not df.empty:
+                        df['year'] = i
+                        df['quanter']=j+1
                         ret_file_name = "data/hsbasic/cnstockoperationability"+str(year)+"q"+str(quater)+".csv"
                         df.to_csv(ret_file_name, index=True, sep=',')
                         print("file %s saved" %ret_file_name)
+                        df_report = df_report.append(df)
+                except OSError:
+                    break;
                 except Exception as e:
                     print("营运能力发生错误%s"%e.messagme)
                     break;
+        total_file_name = "data/hsbasic/cnstockoperationabilitytotal.csv"
+        print("******* file %s saved *******" %total_file_name)
+        df_report.reindex()
+        df_report.to_csv(total_file_name, index=True, sep=',')
+
     elif info_type == 4:
         print("---------获取成长能力----------\n")
+        df_report= pd.DataFrame()
         for i in range(start_year,end_year):
             for j in range(4):
                 year = i
@@ -127,14 +164,26 @@ def get_basic_detail_by_history(info_type,start_year,end_year):
                 try:
                     df = ts.get_growth_data(year,quater)
                     if not df.empty:
+                        df['year'] = i
+                        df['quanter']=j+1
                         ret_file_name = "data/hsbasic/cnstockgrowthability"+str(year)+"q"+str(quater)+".csv"
                         df.to_csv(ret_file_name, index=True, sep=',')
                         print("file %s saved" %ret_file_name)
+                        df_report = df_report.append(df)
+                except OSError:
+                    break;
                 except Exception as e:
                     print("成长能力发生错误%s"%e.messagme)
                     break;
+        total_file_name = "data/hsbasic/cnstockgrowthabilitytotal.csv"
+        print("******* file %s saved *******" %total_file_name)
+        df_report.reindex()
+        df_report.to_csv(total_file_name, index=True, sep=',')
+
+
     elif info_type == 5:
         print("---------获取偿债能力----------\n")
+        df_report= pd.DataFrame()
         for i in range(start_year,end_year):
             for j in range(4):
                 year = i
@@ -142,14 +191,25 @@ def get_basic_detail_by_history(info_type,start_year,end_year):
                 try:
                     df = ts.get_debtpaying_data(year,quater)
                     if not df.empty:
+                        df['year'] = i
+                        df['quanter']=j+1
                         ret_file_name = "data/hsbasic/cnstockdebtability"+str(year)+"q"+str(quater)+".csv"
                         df.to_csv(ret_file_name, index=True, sep=',')
                         print("file %s saved" %ret_file_name)
+                        df_report = df_report.append(df)
+                except OSError:
+                    break;
                 except Exception as e:
                     print("偿债能力发生错误%s"%e.messagme)
                     break;
+        total_file_name = "data/hsbasic/cnstockdebtabilitytotal.csv"
+        print("******* file %s saved *******" %total_file_name)
+        df_report.reindex()
+        df_report.to_csv(total_file_name, index=True, sep=',')
+
     elif info_type == 6:
         print("---------获取现金流量----------\n")
+        df_report= pd.DataFrame()
         for i in range(start_year,end_year):
             for j in range(4):
                 year = i
@@ -157,12 +217,21 @@ def get_basic_detail_by_history(info_type,start_year,end_year):
                 try:
                     df = ts.get_cashflow_data(year,quater)
                     if not df.empty:
+                        df['year'] = i
+                        df['quanter']=j+1
                         ret_file_name = "data/hsbasic/cnstockcashflowability"+str(year)+"q"+str(quater)+".csv"
                         df.to_csv(ret_file_name, index=True, sep=',')
                         print("file %s saved" %ret_file_name)
+                        df_report = df_report.append(df)
+                except OSError:
+                    break;
                 except Exception as e:
                     print("偿债能力发生错误%s"%e.messagme)
                     break;
+        total_file_name = "data/hsbasic/cnstockcashflowabilitytotal.csv"
+        print("******* file %s saved *******" %total_file_name)
+        df_report.reindex()
+        df_report.to_csv(total_file_name, index=True, sep=',')
 
 
 def get_basic_detail_by_quater(year,quater):
@@ -208,9 +277,9 @@ if __name__ == "__main__":
     #loop_all_stocks()
     #df = ts.get_stock_basics()
     #df.to_csv("data/hsbasic/stocklistbasic.csv", index=True, sep=',')
-    #for i in range(6):
-    #get_basic_detail_by_history(i+1,2018,2019)
-    get_basic_detail_by_quater(2018,1)
+    for i in range(1,6):
+        get_basic_detail_by_history(i+1,2015,2019)
+    #get_basic_detail_by_quater(2018,1)
 
 
 
