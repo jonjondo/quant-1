@@ -291,7 +291,8 @@ class WhiteGuardStockCore:
                     #minaaj_index = ta.MININDEX(df['AAJ'].values[:-1], timeperiod=12)[-1]
                     #print(minaaj,minaaj_index,df.iat[-1,-1],stock_id)
                     #最新的AAJ小于0，且大于低谷，并且低谷就是近一段时间的最低值，确认反转
-                    if df.iat[-1,-1] < -45 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj:
+                    if df.iat[-1,-1] < -20 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #-20拍脑袋的
+                    #if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #从-45改成0
                         info.loc[(info.code == EachStockID),'DMI2']=1
                         print("%s %s[DMI2底部反转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
                     elif  df.iat[-2,-1] > df.iat[-1,-1] and df.iat[-2,-1] == maxaaj: #去掉大于0的条件
@@ -341,8 +342,14 @@ class WhiteGuardStockCore:
                 stock_data['KDJ_金叉死叉'] = ''
                 kdj_position_gold = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_K'] <= 25)|(stock_data['KDJ_J'] < 0)
                 kdj_position_die = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_D'] > 75 )
-                stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index, 'KDJ_金叉死叉'] = 1
-                stock_data.loc[kdj_position_die[(kdj_position_die == False) & (kdj_position_die.shift() == True)].index, 'KDJ_金叉死叉'] = -1
+                try:
+                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index, 'KDJ_金叉死叉'] = 1
+                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index-1, 'KDJ_金叉死叉'] = 1
+                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index-2, 'KDJ_金叉死叉'] = 1
+                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index-3, 'KDJ_金叉死叉'] = 1
+                    stock_data.loc[kdj_position_die[(kdj_position_die == False) & (kdj_position_die.shift() == True)].index, 'KDJ_金叉死叉'] = -1
+                except:
+                    pass
                 #stock_data.to_csv("00700KDJ.csv", index=True, sep=',')
                 if len(stock_data.index) > 3:
                     #过去三天出了金叉,或过去五天有J无限接近底部,同时没有扭头向下的话，,标为1.
@@ -462,6 +469,7 @@ class WhiteGuardStockCore:
                     stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index - 1, 'KDJ_金叉死叉'] = 1
                     stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index - 2, 'KDJ_金叉死叉'] = 1
                     stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index - 3, 'KDJ_金叉死叉'] = 1
+                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index + 1, 'KDJ_金叉死叉'] = 1
                 except:
                     pass
                 stock_data.loc[kdj_position_die[(kdj_position_die == False) & (kdj_position_die.shift() == True)].index, 'KDJ_金叉死叉'] = -1
@@ -928,7 +936,7 @@ class WhiteGuardStockCore:
 
     #获取每天的策略，该买啥卖啥
     def get_everyday_schedule(self):
-        self.init_cn_stock("data/stocklist.csv")
+        self.init_cn_stock("data/stocklistbasic.csv")
         #wgs.loop_all_cn_stocks('futu',30,0)
         self.init_hk_stock("data/HSIIndexList.csv")
         df = self.loop_all_stocks('futu',30,0) #0 沪深 #1 香港 #3美国
@@ -969,7 +977,7 @@ class WhiteGuardStockCore:
         progress = 0
         for code in self.cn_stock_list['code']:
             progress = progress + 1
-            print("[%s]正在处理%s.....进度%d%"%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),code,progress/len(self.cn_stock_list.index)*100))
+            print("[%s]正在处理%s.....进度%0.1f"%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time())),code,progress/len(self.cn_stock_list.index)*100))
             ret,stock_data=self.quote_ctx.get_history_kline(code,start='2017-01-01',end=end_day,ktype='K_DAY', autype='qfq')
             if stock_data.empty:
                 continue
@@ -984,9 +992,9 @@ class WhiteGuardStockCore:
                 #stock_data = df[(((df['MACD_CROSS'] == 3 & df['MACD_DIS'] <= 0.3) |(df['MACD_CROSS'] == 4 & df['MACD_DIS'] <= 0.4)) & (df['AAJ_FLAG'] == 1))]
                 #stock_data = df[(df['MACD_CROSS'] >= 3)  & (df['MACD_DIS'] <= 0.5) & (df['AAJ_FLAG'] == 1)]
                 #macd_postion= (stock_data['MACD'] < stock_data['MACDsignal']) & (stock_data['MACD_DIS'] <= 0.45) & (stock_data['MACD'] > stock_data['MACD'].shift())
-                stock_data = df[(df['MACD_CROSS'] >= 1) & (df['AAJ_FLAG'] == 1)]
-                stock_data2 = df[(df['KDJ_金叉死叉'] == 1) & (df['AAJ_FLAG'] == 1)]
-                stock_data = pd.merge(stock_data,stock_data2,how='left')
+                #stock_data = df[(df['MACD_CROSS'] >= 1) & (df['AAJ_FLAG'] == 1)]
+                stock_data = df[(df['KDJ_金叉死叉'] == 1) & (df['AAJ_FLAG'] == 1)]
+                #stock_data = pd.merge(stock_data,stock_data2,how='left')
             except:
                 continue
 
@@ -1011,7 +1019,7 @@ if __name__ == "__main__":
     #wgs=WhiteGuardStockCore()
     #wgs=WhiteGuardStockCore('119.29.141.202',11111)
     wgs=WhiteGuardStockCore('192.168.0.106',11111)
-    #wgs.init_cn_stock("data/stocklistbasic.csv")
+    #wgs.init_cn_stock("data/stocklist.csv")
     #wgs.loop_all_cn_stocks('futu',30,0)
     #wgs.init_hk_stock("data/HSIIndexList.csv")
     #wgs.get_stock_dmi_my_signal('HK.00700','2017-10-1','2018-06-1')
