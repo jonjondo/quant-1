@@ -21,7 +21,7 @@ class WhiteGuardStockCore:
         self.hk_stock_list = pb.read_csv(hk_stock_file_name)
 
     def init_us_stock(self,us_stock_file_name):
-        self.hk_stock_list = pb.read_csv(us_stock_file_name)
+        self.us_stock_list = pb.read_csv(us_stock_file_name)
 
     def start_hk_market(self,trade_env):
         self.trade_ctx = OpenHKTradeContext(host=self.api_ip, port=self.api_port)
@@ -294,7 +294,7 @@ class WhiteGuardStockCore:
                     if df.iat[-1,-1] < -20 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #-20拍脑袋的
                     #if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #从-45改成0
                         info.loc[(info.code == EachStockID),'DMI2']=1
-                        print("%s %s[DMI2底部反转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
+                        print("%s %s[DMI2底部反  转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
                     elif  df.iat[-2,-1] > df.iat[-1,-1] and df.iat[-2,-1] == maxaaj: #去掉大于0的条件
                         info.loc[(info.code == EachStockID),'DMI2']= -1
                         print("%s %s[DMI2顶部反转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
@@ -935,17 +935,26 @@ class WhiteGuardStockCore:
         return ret,data
 
     #获取每天的策略，该买啥卖啥
-    def get_everyday_schedule(self):
-        self.init_cn_stock("data/stocklistbasic.csv")
+    def get_everyday_schedule(self,market):
+        self.init_cn_stock("data/stocklist.csv")
         #wgs.loop_all_cn_stocks('futu',30,0)
         self.init_hk_stock("data/HSIIndexList.csv")
-        df = self.loop_all_stocks('futu',30,0) #0 沪深 #1 香港 #3美国
-        self.df_total = self.df_total.append(df)
-        df = self.loop_all_stocks('futu',30,1) #0 沪深 #1 香港 #3美国
-        self.df_total = self.df_total.append(df)
-        df_selected =wgs.df_total.loc[(wgs.df_total['DMI2'] == 1) & (wgs.df_total['MACD'] >= 1)]
+        self.init_us_stock("data/us_market.csv")
+        if market <= 0:
+            df = self.loop_all_stocks('futu',30,0) #0 沪深 #1 香港 #2美国
+            self.df_total = self.df_total.append(df)
+            df = self.loop_all_stocks('futu',30,1) #0 沪深 #1 香港 #2美国
+            self.df_total = self.df_total.append(df)
+
+            df = self.loop_all_stocks('futu',30,2) #0 沪深 #1 香港 #2美国
+            self.df_total = self.df_total.append(df)
+        else:
+            df = self.loop_all_stocks('futu',30,market) #0 沪深 #1 香港 #2美国
+            self.df_total = self.df_total.append(df)
+
+        df_selected =wgs.df_total.loc[(wgs.df_total['DM  I2'] == 1) & (wgs.df_total['MACD'] >= 1)]
         df_sell = wgs.df_total.loc[(wgs.df_total['DMI2'] == -1)]
-        df_selected = df_selected[['id','code','stock_name']]
+        df_selected = df_selected[['code','stock_name']]
         df_selected = df_selected.drop_duplicates(['code'])
         print("--------------以下为今日选股-----------------")
         print(df_selected)
@@ -962,7 +971,7 @@ class WhiteGuardStockCore:
         df_storage=df_storage.append(df_selected)
         df_storage = df_storage.drop_duplicates(['code'])
         df_storage_keep = df_storage[~(df_storage['code'].isin(df_sell['code']))]
-        df_storage_keep = df_storage_keep[['id','code','stock_name']]
+        df_storage_keep = df_storage_keep[['code','stock_name']]
         df_storage_to_sell = df_storage[(df_storage['code'].isin(df_sell['code']))]
         df_storage_keep.to_csv("data/storagelist.csv",columns=['code','stock_name'])
         print("--------------以下持仓应该卖出-----------------")
@@ -1018,7 +1027,7 @@ if __name__ == "__main__":
     #loop_all_hk_stocks_from_file("HSIIndexList.csv",60)
     #wgs=WhiteGuardStockCore()
     #wgs=WhiteGuardStockCore('119.29.141.202',11111)
-    wgs=WhiteGuardStockCore('192.168.0.106',11111)
+    wgs=WhiteGuardStockCore()
     #wgs.init_cn_stock("data/stocklist.csv")
     #wgs.loop_all_cn_stocks('futu',30,0)
     #wgs.init_hk_stock("data/HSIIndexList.csv")
@@ -1027,7 +1036,7 @@ if __name__ == "__main__":
     #get_stock_kdj_buy_signal('HK.03883',30)
     #wgs.get_stock_dmi_my_signal_min('HK.02382',15)
     #每日运行选股
-    wgs.get_everyday_schedule()
+    wgs.get_everyday_schedule(2)
     #回测功能
     #wgs.calculate_rate_of_my_schedule()
     wgs.clear_quote()
