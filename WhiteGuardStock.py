@@ -8,13 +8,16 @@ import numpy as np
 import pandas as pb
 import chardet
 
-
 class WhiteGuardStockCore:
-    def __init__(self,dst_ip = '127.0.0.1',dst_port = 11111):
-        self.api_ip = dst_ip
-        self.api_port = dst_port
-        self.quote_ctx = OpenQuoteContext(self.api_ip, self.api_port)
+    def __init__(self,dst_ip = '192.168.0.106',dst_port = 11111):
+        # self.api_ip = dst_ip
+        # self.api_port = dst_port
+        # self.quote_ctx = OpenQuoteContext(self.api_ip, self.api_port)
         self.df_total = pd.DataFrame()
+
+    def start_connect(self,dst_ip,dst_port):
+        self.quote_ctx = OpenQuoteContext(dst_ip, dst_port)
+
     def init_cn_stock(self,cn_stock_file_name):
         self.cn_stock_list = pb.read_csv(cn_stock_file_name,encoding='GBK')
     def init_hk_stock(self,hk_stock_file_name):
@@ -249,18 +252,24 @@ class WhiteGuardStockCore:
     def loop_all_stocks(self,data_source,days,market):
         if market == 0: #沪深
             info = self.cn_stock_list
+            #total_stock_count = len(self.cn_stock_list.index)
         elif market == 1: #香港
             info = self.hk_stock_list
+            #total_stock_count = len(self.hk_stock_list.index)
         elif market == 2:
             info = self.us_stock_list
+            #total_stock_count = len(self.us_stock_list.index)
         else:
             info = self.cn_stock_list
-
+        total_stock_count = len(info.index)
         print("----------------------以下符合条件----------------------------")
         end_day=datetime.date(datetime.date.today().year,datetime.date.today().month,datetime.date.today().day)
         end_day=end_day.strftime("%Y-%m-%d")
         #df_last_ret = pd.DataFrame()
+        cur_pos = 0
         for EachStockID in info.code:
+            cur_pos = cur_pos +1
+            #self.update_progress.emit(str(cur_pos *100 /total_stock_count))
             if data_source == 'tushare':
                 if self.is_cn_stock_break_high_from_tushare(EachStockID,days):
                      print("%s %s"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
@@ -276,6 +285,10 @@ class WhiteGuardStockCore:
                 # info['DMI2'] = 0
                 # info['MACROSS'] = 0
                 # info['MACD'] = 0
+
+                if self.is_cn_stock_break_high_from_futu(EachStockID,days*2) == True:  #得算两个月的新高才靠谱
+                    print("%s %s[两月前高]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
+                    info.loc[(info.code == EachStockID),'NEWHIGH']=1
 
                 if self.get_stock_kdj_buy_signal(EachStockID,days) == True:
                     print("%s %s[KDJ金叉]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
@@ -294,27 +307,29 @@ class WhiteGuardStockCore:
                     if df.iat[-1,-1] < -20 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #-20拍脑袋的
                     #if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #从-45改成0
                         info.loc[(info.code == EachStockID),'DMI2']=1
-                        print("%s %s[DMI2底部反  转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
+                        print("%s %s[DMI2底部反转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
+
                     elif  df.iat[-2,-1] > df.iat[-1,-1] and df.iat[-2,-1] == maxaaj: #去掉大于0的条件
                         info.loc[(info.code == EachStockID),'DMI2']= -1
                         print("%s %s[DMI2顶部反转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
 
+
                     if self.get_stock_my_macd_signal(EachStockID,'2018-1-1',time.strftime("%Y-%m-%d",time.localtime(time.time()))) == True:
-                         info.loc[(info.code == EachStockID),'MACD']=1
-                         print("%s %s[MACD趋势相交]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
+	                    info.loc[(info.code == EachStockID),'MACD']=1
+	                    print("%s %s[MACD趋势相交]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
+
                 except:
                     continue
 
-
         #df_last_ret.to_csv('last_ret.csv')
-        #print(df_last_ret)
+        print(info)
         print("---------------------------END-------------------------------")
         print("----------------------KDJ金叉 MA穿越--------------------------")
         print(info.loc[(info['KDJ'] == 1) & (info['MACROSS'] == 1) ])
         print("---------------------------DMI2买入指标-------------------------------")
         self.final_selected_stock = info.loc[(info['DMI2'] == 1) & (info['MACD'] == 1)] #df_last_ret[(df_last_ret['MACD'] <= df_last_ret['MACDsignal']) & (df_last_ret['MACD_DIS'] <= 0.5) & (df_last_ret['AAJ_FLAG'] == 1)]
         print(self.final_selected_stock['code'])
-        info.to_csv('last_ret.csv')
+        info.to_csv('data/量化结果汇总_'+ str(market) + time.strftime("%Y%m%d",time.localtime(time.time())) + '_' +'.csv')
         return info
 
 
@@ -940,7 +955,8 @@ class WhiteGuardStockCore:
         #wgs.loop_all_cn_stocks('futu',30,0)
         self.init_hk_stock("data/HSIIndexList.csv")
         self.init_us_stock("data/us_market.csv")
-        if market <= 0:
+        self.df_to_do= pd.DataFrame()
+        if market < 0:
             df = self.loop_all_stocks('futu',30,0) #0 沪深 #1 香港 #2美国
             self.df_total = self.df_total.append(df)
             df = self.loop_all_stocks('futu',30,1) #0 沪深 #1 香港 #2美国
@@ -952,7 +968,7 @@ class WhiteGuardStockCore:
             df = self.loop_all_stocks('futu',30,market) #0 沪深 #1 香港 #2美国
             self.df_total = self.df_total.append(df)
 
-        df_selected =wgs.df_total.loc[(wgs.df_total['DM  I2'] == 1) & (wgs.df_total['MACD'] >= 1)]
+        df_selected =wgs.df_total.loc[(wgs.df_total['DMI2'] == 1) & (wgs.df_total['KDJ'] >= 1)]
         df_sell = wgs.df_total.loc[(wgs.df_total['DMI2'] == -1)]
         df_selected = df_selected[['code','stock_name']]
         df_selected = df_selected.drop_duplicates(['code'])
@@ -1028,6 +1044,7 @@ if __name__ == "__main__":
     #wgs=WhiteGuardStockCore()
     #wgs=WhiteGuardStockCore('119.29.141.202',11111)
     wgs=WhiteGuardStockCore()
+    wgs.start_connect('192.168.0.106',11111)
     #wgs.init_cn_stock("data/stocklist.csv")
     #wgs.loop_all_cn_stocks('futu',30,0)
     #wgs.init_hk_stock("data/HSIIndexList.csv")
@@ -1036,7 +1053,7 @@ if __name__ == "__main__":
     #get_stock_kdj_buy_signal('HK.03883',30)
     #wgs.get_stock_dmi_my_signal_min('HK.02382',15)
     #每日运行选股
-    wgs.get_everyday_schedule(2)
+    wgs.get_everyday_schedule(-1)
     #回测功能
     #wgs.calculate_rate_of_my_schedule()
     wgs.clear_quote()
