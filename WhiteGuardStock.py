@@ -7,6 +7,26 @@ import datetime
 import numpy as np
 import pandas as pb
 import chardet
+from lxml import etree
+
+import DataFrameToHtmlSytle as df2html
+import sendmail as sm
+
+
+mailto_list=['wangpenghehe@qq.com','11861040@qq.com','3377499@qq.com','55695287@qq.com','zhoubinjason@gmail.com']
+'''
+11861040@qq.com
+3377499@qq.com
+55695287@qq.com
+wangpenghehe@qq.com
+zhoubinjason@gmail.com
+'''
+mail_host="smtp.qq.com:465"
+mail_user="wangpenghehe"
+mail_pass="tingting520"
+mail_postfix="qq.com"
+
+
 
 class WhiteGuardStockCore:
     def __init__(self,dst_ip = '192.168.0.106',dst_port = 11111):
@@ -962,8 +982,8 @@ class WhiteGuardStockCore:
             df = self.loop_all_stocks('futu',30,1) #0 沪深 #1 香港 #2美国
             self.df_total = self.df_total.append(df)
 
-            df = self.loop_all_stocks('futu',30,2) #0 沪深 #1 香港 #2美国
-            self.df_total = self.df_total.append(df)
+            #df = self.loop_all_stocks('futu',30,2) #0 沪深 #1 香港 #2美国
+            #self.df_total = self.df_total.append(df)
         else:
             df = self.loop_all_stocks('futu',30,market) #0 沪深 #1 香港 #2美国
             self.df_total = self.df_total.append(df)
@@ -972,6 +992,7 @@ class WhiteGuardStockCore:
         df_sell = wgs.df_total.loc[(wgs.df_total['DMI2'] == -1)]
         df_selected = df_selected[['code','stock_name']]
         df_selected = df_selected.drop_duplicates(['code'])
+        df_selected['operation'] = 'BUY'
         print("--------------以下为今日选股-----------------")
         print(df_selected)
         print("------------------结束----------------------")
@@ -990,9 +1011,14 @@ class WhiteGuardStockCore:
         df_storage_keep = df_storage_keep[['code','stock_name']]
         df_storage_to_sell = df_storage[(df_storage['code'].isin(df_sell['code']))]
         df_storage_keep.to_csv("data/storagelist.csv",columns=['code','stock_name'])
+        df_storage_to_sell['operation'] = 'SELL'
         print("--------------以下持仓应该卖出-----------------")
         print(df_storage_to_sell)
         print("------------------结束-----------------------")
+        df_today_selection = pd.merge(df_selected,df_storage_to_sell,how='left')
+        html = df2html.df_to_html(df_today_selection[['code','stock_name','operation']])
+        sm.send_mail(mailto_list,"Daily Quant Stock Selection",html)
+
 
     #还没写好，回测功能函数
     def calculate_rate_of_my_schedule(self):
