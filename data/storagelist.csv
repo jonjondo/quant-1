@@ -181,21 +181,58 @@
 179,HK.03883,中國奧園
 180,HK.03933,聯邦制藥
 181,SZ.000615,京汉股份
-11,HK.00016,新鴻基地產
-14,HK.00020,會德豐
-26,HK.00127,華人置業
-126,HK.00836,華潤電力
-141,HK.00958,華能新能源
-142,HK.00960,龍湖地產
-244,HK.02380,中國電力
-263,HK.03311,中國建築國際
-324,HK.00198,星美控股
-437,HK.00839,中教控股
-517,HK.01345,中國先鋒醫藥
-523,HK.01375,中州證券
-532,HK.01513,麗珠醫藥
-559,HK.01818,招金礦業
-617,HK.02768,佳源國際控股
-636,HK.03382,天津港發展
-662,HK.06066,中信建投証券
-667,HK.06169,宇華教育
+182,HK.00016,新鴻基地產
+183,HK.00020,會德豐
+184,HK.00127,華人置業
+185,HK.00836,華潤電力
+186,HK.00958,華能新能源
+187,HK.00960,龍湖地產
+188,HK.02380,中國電力
+189,HK.03311,中國建築國際
+190,HK.00198,星美控股
+191,HK.00839,中教控股
+192,HK.01345,中國先鋒醫藥
+193,HK.01375,中州證券
+194,HK.01513,麗珠醫藥
+195,HK.01818,招金礦業
+196,HK.02768,佳源國際控股
+197,HK.03382,天津港發展
+198,HK.06066,中信建投証券
+199,HK.06169,宇華教育
+200,US.SWCH,Switch Inc
+201,US.PLSE,Pulse Biosciences Inc
+202,US.CARS,Cars.com Inc
+168,US.AAL,美国航空
+455,US.MAR,万豪酒店
+722,US.AEHR,Aehr Test Systems
+746,US.AIMT,"AIMMUNE THERAPEUTICS, INC."
+883,US.AVEO,AVEO制药公司
+938,US.BIOC,"Biocept, Inc."
+969,US.BNTC,BENITEC BIOPHARMA LTD/ADR
+1022,US.CAMP,CalAmp Corp.
+1023,US.CAMT,康特科技
+1033,US.CASH,米塔金融
+1102,US.CG,凯雷
+1167,US.CNOB,"ConnectOne Bancorp, Inc."
+1313,US.DHXM,DHX Media Ltd.
+1349,US.DXCM,德康医疗
+1351,US.DXPE,"DXP Enterprises, Inc."
+1403,US.EML,The Eastern Co.
+1411,US.ENTA,"Enanta Pharmaceuticals, Inc."
+1427,US.ESES,"Eco-Stim Energy Solutions, Inc."
+1455,US.EXTR,极速网络
+1486,US.FEYE,FireEye Inc.
+1533,US.FOMX,Foamix
+1538,US.FORR,佛罗斯特研究
+1574,US.FVE,"Five Star Senior Living, Inc."
+1584,US.GBNK,担保银行
+1725,US.HQY,HealthEquity
+1903,US.KFRC,K力
+1977,US.LLNW,"Limelight Networks, Inc."
+1979,US.LMAT,勒梅特微管医疗
+2219,US.NKTR,内克塔治疗
+2220,US.NLNK,NewLink Genetics Corp.
+2398,US.PFBC,保富银行
+2908,US.TTPH,"Tetraphase Pharmaceuticals, Inc."
+2974,US.VCEL,Vericel Corp.
+3110,US.ZG,"Zillow Group, Inc."
