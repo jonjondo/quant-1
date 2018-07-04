@@ -1032,7 +1032,7 @@ def get_index_stocks(ip, port, strcode):
     return ret, data_frame
 
 if __name__ == "__main__":
-    api_ip = '119.29.141.202' #''119.29.141.202'这里要使用本地客户端
+    api_ip = '192.168.0.106' #''119.29.141.202'这里要使用本地客户端
     api_port = 11111
 
     enum_all_index(api_ip, api_port)
@@ -1047,11 +1047,28 @@ if __name__ == "__main__":
     print(get_index_stocks(api_ip, api_port, 'HK.800000'))
 
     print('US..DJI 道琼斯指数\n')
-    print(get_index_stocks(api_ip, api_port, 'US..DJI'))
+    ret, data_frame = get_index_stocks(api_ip, api_port, 'US..DJI')
+    data_frame.to_csv("data/index_DJI.csv", index=True, sep=',', columns=['code', 'stock_name'])
 
+    print('US..IXIC 纳斯达克指数\n')
+    ret, data_frame =get_index_stocks(api_ip, api_port, 'US..IXIC')
+    data_frame.to_csv("data/index_IXIC.csv", index=True, sep=',', columns=['code', 'stock_name'])
+
+    # print('US..NDX 纳斯达克100指数\n')
+    # ret, data_frame =get_index_stocks(api_ip, api_port, 'US..NDX')
+    # data_frame.to_csv("data/index_NDX.csv", index=True, sep=',', columns=['code', 'stock_name'])
+
+	#NDX
+    print('US..INX 标普500指数\n')
+    ret, data_frame = get_index_stocks(api_ip, api_port, 'US..INX')
+    data_frame.to_csv("data/index_INX.csv", index=True, sep=',', columns=['code', 'stock_name'])
+
+
+
+	#UUS..INX
     print('沪深300 指数\n')
     ret, data_frame =get_index_stocks(api_ip,api_port,'SZ.399300')
-    data_frame.to_csv("data/index_hs300.txt", index=True, sep=' ', columns=['code', 'stock_name'])
+    data_frame.to_csv("data/index_hs300.csv", index=True, sep=',', columns=['code', 'stock_name'])
 
 
 

@@ -7,10 +7,9 @@ import datetime
 import numpy as np
 import pandas as pb
 import chardet
-
 import DataFrameToHtmlSytle as df2html
 import sendmail as sm
-
+import  time
 
 
 
@@ -335,7 +334,7 @@ class WhiteGuardStockCore:
         print("---------------------------DMI2买入指标-------------------------------")
         self.final_selected_stock = info.loc[(info['DMI2'] == 1) & (info['MACD'] == 1)] #df_last_ret[(df_last_ret['MACD'] <= df_last_ret['MACDsignal']) & (df_last_ret['MACD_DIS'] <= 0.5) & (df_last_ret['AAJ_FLAG'] == 1)]
         print(self.final_selected_stock['code'])
-        info.to_csv('data/量化结果汇总_'+ str(market) + '_' + time.strftime("%Y%m%d",time.localtime(time.time())) + '.csv')
+        info.to_csv('data/tempfile/量化结果汇总_'+ str(market) + '_' + time.strftime("%Y%m%d",time.localtime(time.time())) + '.csv')
         #df2html.df_to_htmlfile(info)
         #html = df2html.df_to_html(df)
         #print(html)
@@ -966,6 +965,7 @@ class WhiteGuardStockCore:
         self.init_hk_stock("data/HSIIndexList.csv")
         self.init_us_stock("data/us_market.csv")
         self.df_to_do= pd.DataFrame()
+        self.df_total.drop(self.df_total.index,inplace=True)
         if market < 0:
             df = self.loop_all_stocks('futu',30,0) #0 沪深 #1 香港 #2美国
             self.df_total = self.df_total.append(df)
@@ -978,36 +978,45 @@ class WhiteGuardStockCore:
             df = self.loop_all_stocks('futu',30,market) #0 沪深 #1 香港 #2美国
             self.df_total = self.df_total.append(df)
 
+        if market == 0:
+	        market_name = 'CN'
+        elif market == 1:
+	        market_name = 'HK'
+        elif market == 2:
+	        market_name = 'US'
+        else:
+            market_name = 'ALL'
+
         df_selected =wgs.df_total.loc[(wgs.df_total['DMI2'] == 1) & (wgs.df_total['KDJ'] >= 1)]
         df_sell = wgs.df_total.loc[(wgs.df_total['DMI2'] == -1)]
         df_selected = df_selected[['code','stock_name']]
         df_selected = df_selected.drop_duplicates(['code'])
         df_selected['operation'] = 'BUY'
-        print("--------------以下为今日选股-----------------")
+        print("--------------以下为"+ market_name +"今日选股-----------------")
         print(df_selected)
-        print("------------------结束----------------------")
+        print("------------------"+ market_name +"结束----------------------")
         df_storage =pd.DataFrame()
         try:
-            df_selected.to_csv("data/schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv",columns=['code','stock_name'])
-            with open("data/storagelist.csv", 'rb') as f:
+            df_selected.to_csv("data/tempfile/"+ market_name +"_schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv",columns=['code','stock_name'])
+            with open("data/tempfile/"+ market_name +"_storagelist.csv", 'rb') as f:
                     result = chardet.detect(f.read())
-                    df_storage = pb.read_csv("data/storagelist.csv",encoding=result['encoding'])
+                    df_storage = pb.read_csv("data/tempfile/"+ market_name +"_storagelist.csv",encoding=result['encoding'])
         except:
-            print("尝试写入文件%s失败，跳过...."%("data/schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv"))
+            print("尝试写入文件%s失败，跳过...."%("data/tempfile/"+ market_name +"_schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv"))
         #df_storage = pd.read_csv("data/storagelist.csv")
         df_storage=df_storage.append(df_selected)
         df_storage = df_storage.drop_duplicates(['code'])
         df_storage_keep = df_storage[~(df_storage['code'].isin(df_sell['code']))]
         df_storage_keep = df_storage_keep[['code','stock_name']]
         df_storage_to_sell = df_storage[(df_storage['code'].isin(df_sell['code']))]
-        df_storage_keep.to_csv("data/storagelist.csv",columns=['code','stock_name'])
+        df_storage_keep.to_csv("data/tempfile/"+ market_name +"_storagelist.csv",columns=['code','stock_name'])
         df_storage_to_sell['operation'] = 'SELL'
-        print("--------------以下持仓应该卖出-----------------")
+        print("--------------"+ market_name +"市场以下持仓应该卖出-----------------")
         print(df_storage_to_sell)
-        print("------------------结束-----------------------")
+        print("------------------"+ market_name +"卖出标志结束-----------------------")
         df_today_selection = pd.merge(df_selected,df_storage_to_sell,how='left')
         html = df2html.df_to_html(df_today_selection[['code','stock_name','operation']])
-        sm.send_mail_withsub("Daily Quant Stock Selection",html)
+        sm.send_mail_withsub("Daily Quant Stock Selection("+ market_name +")",html)
 
 
     #还没写好，回测功能函数
@@ -1069,7 +1078,9 @@ if __name__ == "__main__":
     #get_stock_kdj_buy_signal('HK.03883',30)
     #wgs.get_stock_dmi_my_signal_min('HK.02382',15)
     #每日运行选股
-    wgs.get_everyday_schedule(-1)
+    wgs.get_everyday_schedule(0)
+    wgs.get_everyday_schedule(1)
+    wgs.get_everyday_schedule(2)
     #回测功能
     #wgs.calculate_rate_of_my_schedule()
     wgs.clear_quote()

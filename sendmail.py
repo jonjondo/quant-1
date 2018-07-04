@@ -47,7 +47,7 @@ def read_file():
 
 
 def send_mail(to_list,sub,content):
-    me="Daily Stock Selection from Gua"+"<"+mail_user+"@"+mail_postfix+">"
+    me="WGQuant Notification"+"<"+mail_user+"@"+mail_postfix+">"
     msg = MIMEText(content,_subtype='html',_charset='utf-8')
     msg['Subject'] = sub  
     msg['From'] = me  
