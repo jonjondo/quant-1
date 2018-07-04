@@ -1051,7 +1051,7 @@ class WhiteGuardStockCore:
             if stock_data.empty:
                 pass
             all_stock = all_stock.append(stock_data, ignore_index=True)
-        all_stock.to_csv("data/回测数据.csv", index=True, sep=',')
+        all_stock.to_csv("data/tempfile/回测数据.csv", index=True, sep=',')
         # ========== 根据上一步得到的所有股票KDJ金叉数据all_stock，统计这些股票在未来交易日中的收益情况
         print('所选择股票清单中符合条件的股票收益统计如下，一共%s，这些股票在：' %all_stock.shape[0])
 
