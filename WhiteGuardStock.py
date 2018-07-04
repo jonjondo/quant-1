@@ -7,24 +7,10 @@ import datetime
 import numpy as np
 import pandas as pb
 import chardet
-from lxml import etree
 
 import DataFrameToHtmlSytle as df2html
 import sendmail as sm
 
-
-mailto_list=['wangpenghehe@qq.com','11861040@qq.com','3377499@qq.com','55695287@qq.com','zhoubinjason@gmail.com']
-'''
-11861040@qq.com
-3377499@qq.com
-55695287@qq.com
-wangpenghehe@qq.com
-zhoubinjason@gmail.com
-'''
-mail_host="smtp.qq.com:465"
-mail_user="wangpenghehe"
-mail_pass="tingting520"
-mail_postfix="qq.com"
 
 
 
@@ -282,7 +268,7 @@ class WhiteGuardStockCore:
         else:
             info = self.cn_stock_list
         total_stock_count = len(info.index)
-        print("----------------------以下符合条件----------------------------")
+        print("----------------------开始运行量化程序----------------------------")
         end_day=datetime.date(datetime.date.today().year,datetime.date.today().month,datetime.date.today().day)
         end_day=end_day.strftime("%Y-%m-%d")
         #df_last_ret = pd.DataFrame()
@@ -349,7 +335,11 @@ class WhiteGuardStockCore:
         print("---------------------------DMI2买入指标-------------------------------")
         self.final_selected_stock = info.loc[(info['DMI2'] == 1) & (info['MACD'] == 1)] #df_last_ret[(df_last_ret['MACD'] <= df_last_ret['MACDsignal']) & (df_last_ret['MACD_DIS'] <= 0.5) & (df_last_ret['AAJ_FLAG'] == 1)]
         print(self.final_selected_stock['code'])
-        info.to_csv('data/量化结果汇总_'+ str(market) + time.strftime("%Y%m%d",time.localtime(time.time())) + '_' +'.csv')
+        info.to_csv('data/量化结果汇总_'+ str(market) + '_' + time.strftime("%Y%m%d",time.localtime(time.time())) + '.csv')
+        #df2html.df_to_htmlfile(info)
+        #html = df2html.df_to_html(df)
+        #print(html)
+        #sm.send_mail(html)
         return info
 
 
@@ -982,8 +972,8 @@ class WhiteGuardStockCore:
             df = self.loop_all_stocks('futu',30,1) #0 沪深 #1 香港 #2美国
             self.df_total = self.df_total.append(df)
 
-            #df = self.loop_all_stocks('futu',30,2) #0 沪深 #1 香港 #2美国
-            #self.df_total = self.df_total.append(df)
+            df = self.loop_all_stocks('futu',30,2) #0 沪深 #1 香港 #2美国
+            self.df_total = self.df_total.append(df)
         else:
             df = self.loop_all_stocks('futu',30,market) #0 沪深 #1 香港 #2美国
             self.df_total = self.df_total.append(df)
@@ -1017,7 +1007,7 @@ class WhiteGuardStockCore:
         print("------------------结束-----------------------")
         df_today_selection = pd.merge(df_selected,df_storage_to_sell,how='left')
         html = df2html.df_to_html(df_today_selection[['code','stock_name','operation']])
-        sm.send_mail(mailto_list,"Daily Quant Stock Selection",html)
+        sm.send_mail_withsub("Daily Quant Stock Selection",html)
 
 
     #还没写好，回测功能函数

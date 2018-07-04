@@ -2,6 +2,7 @@
 import smtplib,time,getopt,sys  
 from email.mime.text import MIMEText  
 mailto_list=['wangpenghehe@qq.com','11861040@qq.com','3377499@qq.com','55695287@qq.com','zhoubinjason@gmail.com']
+#mailto_list=['wangpenghehe@qq.com']
 '''
 
 11861040@qq.com
@@ -61,6 +62,10 @@ def send_mail(to_list,sub,content):
     except Exception as e:
         print(str(e)  )
         return False
+        
+
+def send_mail_withsub(sub,content):
+    send_mail(mailto_list,sub,content)
 
 if __name__ == '__main__': 
     GetOpt()
