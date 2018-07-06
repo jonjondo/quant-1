@@ -10,9 +10,9 @@ import chardet
 import DataFrameToHtmlSytle as df2html
 import sendmail as sm
 import  time
-import getopt
+import getopt,os
 
-
+path="data/"
 
 class WhiteGuardStockCore:
     def __init__(self,dst_ip = '192.168.0.106',dst_port = 11111):
@@ -254,7 +254,7 @@ class WhiteGuardStockCore:
         print("---------------------------DMI2买入指标-------------------------------")
         self.final_selected_stock = info.loc[(info['DMI2'] == 1) & (info['MACD'] == 1)] #df_last_ret[(df_last_ret['MACD'] <= df_last_ret['MACDsignal']) & (df_last_ret['MACD_DIS'] <= 0.5) & (df_last_ret['AAJ_FLAG'] == 1)]
         print(self.final_selected_stock['code'])
-        info.to_csv('data/tempfile/量化结果汇总_'+ str(market) + '_' + time.strftime("%Y%m%d",time.localtime(time.time())) + '.csv')
+        info.to_csv(os.path.join(path,'tempfile/量化结果汇总_'+ str(market) + '_' + time.strftime("%Y%m%d",time.localtime(time.time())) + '.csv'))
         #df2html.df_to_htmlfile(info)
         #html = df2html.df_to_html(df)
         #print(html)
@@ -340,13 +340,6 @@ class WhiteGuardStockCore:
         except Exception as e:
             print("错误：%s,返回结果%s in get_stock_ma_cross_signal"% (e,df))
     def get_stock_my_macd_signal(self,stock_id,start_day,end_day):
-        # end_day=datetime.date(datetime.date.today().year,datetime.date.today().month,datetime.date.today().day)
-        # days=days*7/5
-        # #考虑到周六日非交易
-        # start_day=end_day-datetime.timedelta(days)
-        #
-        # start_day=start_day.strftime("%Y-%m-%d")
-        # end_day=end_day.strftime("%Y-%m-%d")
         try:
             ret, stock_data = self.quote_ctx.get_history_kline(stock_id, start=start_day,end=end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
             if not stock_data.empty:
@@ -357,9 +350,6 @@ class WhiteGuardStockCore:
                 # 调用talib计算MACD指标
                 stock_data['MACD'],stock_data['MACDsignal'],stock_data['MACDhist'] = ta.MACD(np.array(close),fastperiod=12, slowperiod=26, signalperiod=9)
                 stock_data['my_MACD'],stock_data['my_MACDsignal'],stock_data['my_MACDhist'] = self.my_macd(stock_data['close'].values, fastperiod=6, slowperiod=12, signalperiod=9)
-                #plt.plot(df.index,df['MACD'],label='DIF')
-                #plt.plot(df.index,df['MACDsignal'],label='DEA')
-
                 def  cal_c(a,b):
                     if abs(a) > abs(b):
                         return abs(abs(a)- abs(b))/abs(a)
@@ -847,10 +837,10 @@ class WhiteGuardStockCore:
 
     #获取每天的策略，该买啥卖啥
     def get_everyday_schedule(self,market):
-        self.init_cn_stock("data/stocklist.csv")
+        self.init_cn_stock(os.path.join(path,"stocklist.csv"))
         #wgs.loop_all_cn_stocks('futu',30,0)
-        self.init_hk_stock("data/HSIIndexList.csv")
-        self.init_us_stock("data/us_market.csv")
+        self.init_hk_stock(os.path.join(path,"HSIIndexList.csv"))
+        self.init_us_stock(os.path.join(path,"us_market.csv"))
         self.df_to_do= pd.DataFrame()
         self.df_total.drop(self.df_total.index,inplace=True)
         if market < 0:
@@ -884,26 +874,30 @@ class WhiteGuardStockCore:
         print("------------------"+ market_name +"结束----------------------")
         df_storage =pd.DataFrame()
         try:
-            df_selected.to_csv("data/tempfile/"+ market_name +"_schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv",columns=['code','stock_name'])
-            with open("data/tempfile/"+ market_name +"_storagelist.csv", 'rb') as f:
+            df_selected.to_csv(os.path.join(path,"tempfile/"+ market_name +"_schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv"),columns=['code','stock_name'])
+            with open(os.path.join(path,"tempfile/"+ market_name +"_storagelist.csv"), 'rb') as f:
                     result = chardet.detect(f.read())
-                    df_storage = pb.read_csv("data/tempfile/"+ market_name +"_storagelist.csv",encoding=result['encoding'])
+                    df_storage = pb.read_csv(os.path.join(path,"tempfile/"+ market_name +"_storagelist.csv"),encoding=result['encoding'])
         except:
-            print("尝试写入文件%s失败，跳过...."%("data/tempfile/"+ market_name +"_schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv"))
+            print("尝试写入文件%s失败，跳过...."%(os.path.join(path,"/tempfile/"+ market_name +"_schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv")))
         #df_storage = pd.read_csv("data/storagelist.csv")
         df_storage=df_storage.append(df_selected)
         df_storage = df_storage.drop_duplicates(['code'])
         df_storage_keep = df_storage[~(df_storage['code'].isin(df_sell['code']))]
         df_storage_keep = df_storage_keep[['code','stock_name']]
-        df_storage_to_sell = df_storage[(df_storage['code'].isin(df_sell['code']))]
-        df_storage_keep.to_csv("data/tempfile/"+ market_name +"_storagelist.csv",columns=['code','stock_name'])
+        #df_storage_to_sell = df_storage[(df_storage['code'].isin(df_sell['code']))]
+        df_storage_to_sell=wgs.df_total.loc[(wgs.df_total['DMI2'] == -1)]
+        df_storage_keep.to_csv(os.path.join(path,"tempfile/"+ market_name +"_storagelist.csv"),columns=['code','stock_name'])
+        df_storage_to_sell = df_storage_to_sell[['code','stock_name']]
         df_storage_to_sell['operation'] = 'SELL'
         print("--------------"+ market_name +"市场以下持仓应该卖出-----------------")
         print(df_storage_to_sell)
         print("------------------"+ market_name +"卖出标志结束-----------------------")
-        df_today_selection = pd.merge(df_selected,df_storage_to_sell,how='left')
+
+        df_today_selection = pd.concat([df_selected,df_storage_to_sell],axis=0)
+        #print(df_today_selection)
         html = df2html.df_to_html(df_today_selection[['code','stock_name','operation']])
-        #sm.send_mail_withsub("Daily Quant Stock Selection("+ market_name +" Market)",html)
+        sm.send_mail_withsub("Daily Quant Stock Selection("+ market_name +" Market)",html)
 
 
     #还没写好，回测功能函数
@@ -938,7 +932,7 @@ class WhiteGuardStockCore:
             if stock_data.empty:
                 pass
             all_stock = all_stock.append(stock_data, ignore_index=True)
-        all_stock.to_csv("data/tempfile/回测数据.csv", index=True, sep=',')
+        all_stock.to_csv(os.path.join(path,"tempfile/回测数据.csv"), index=True, sep=',')
         # ========== 根据上一步得到的所有股票KDJ金叉数据all_stock，统计这些股票在未来交易日中的收益情况
         print('所选择股票清单中符合条件的股票收益统计如下，一共%s，这些股票在：' %all_stock.shape[0])
 
@@ -955,7 +949,7 @@ if __name__ == "__main__":
     #loop_all_hk_stocks_from_file("HSIIndexList.csv",60)
     #wgs=WhiteGuardStockCore()
     #wgs=WhiteGuardStockCore('119.29.141.202',11111)
-    market = -1
+    market = 0
     opts, args = getopt.getopt(sys.argv[1:], "hm:")
     for op, value in opts:
         if op == "-m":
