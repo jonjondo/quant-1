@@ -11,6 +11,9 @@ import DataFrameToHtmlSytle as df2html
 import sendmail as sm
 import  time
 import getopt,os
+from scipy import  stats
+
+
 
 path="data/"
 
@@ -177,6 +180,8 @@ class WhiteGuardStockCore:
             return  False
 
 
+
+
     def loop_all_stocks(self,data_source,days,market):
         if market == 0: #沪深
             info = self.cn_stock_list
@@ -214,6 +219,10 @@ class WhiteGuardStockCore:
                 # if self.is_cn_stock_close_up_than_ma(EachStockID,days,20) == True:
                 #     print("%s %s[站上20日线]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
                 #     info.loc[(info.code == EachStockID),'MA20']=1
+
+                if self.get_stock_ma_linregress(EachStockID,120) == True:
+                    print("%s %s[MA120上升]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
+                    info.loc[(info.code == EachStockID),'MA120Status']=1
 
                 if self.get_stock_kdj_buy_signal(EachStockID,days) == True:
                     print("%s %s[KDJ金叉]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
@@ -512,6 +521,36 @@ class WhiteGuardStockCore:
         except Exception as e:
             print("%s 错误：%s 返回结果%s in %s"% (stock_data['code'],e,stock_data,"get_stock_my_schedule_signal"))
             return  stock_data
+    #MA的线性回归的斜率
+    def get_stock_ma_linregress(self,stock_id,days):
+        end_day=datetime.date(datetime.date.today().year,datetime.date.today().month,datetime.date.today().day)
+        days=days*7/5
+        #考虑到周六日非交易
+        start_day=end_day-datetime.timedelta(days)
+
+        start_day=start_day.strftime("%Y-%m-%d")
+        end_day=end_day.strftime("%Y-%m-%d")
+        try:
+            ret, df = self.quote_ctx.get_history_kline(stock_id, start=start_day,end=end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
+            if not df.empty:
+                df['open'].astype('float')
+                df['close'].astype('float')
+            #提取收盘价
+                #closed=df['close'].values
+                slope, intercept, r_value, p_value, std_err = stats.linregress(df.index,df['close'].values)
+                if slope < 0:
+                    return  False
+                else:
+                    return  True
+
+        except Exception as e:
+            print("错误：%s,返回结果%s in get_stock_ma_linregress"% (e,df))
+
+
+
+
+
+
 
 
     def get_stock_dmi_my_signal(self,stock_id,start_day,end_day):
@@ -864,7 +903,7 @@ class WhiteGuardStockCore:
         else:
             market_name = 'ALL'
 
-        df_selected =wgs.df_total.loc[(wgs.df_total['DMI2'] == 1) & (wgs.df_total['KDJ'] >= 1) & (wgs.df_total['MA5'] >= 1)]
+        df_selected =wgs.df_total.loc[(wgs.df_total['DMI2'] == 1) & (wgs.df_total['KDJ'] >= 1) & (wgs.df_total['MA5'] >= 1) & (wgs.df_total['MA120Status'] >= 1)]
         df_sell = wgs.df_total.loc[(wgs.df_total['DMI2'] == -1)]
         df_selected = df_selected[['code','stock_name']]
         df_selected = df_selected.drop_duplicates(['code'])
@@ -970,5 +1009,6 @@ if __name__ == "__main__":
     #每日运行选股
     wgs.get_everyday_schedule(int(market))
     #回测功能
+    #print(wgs.get_stock_ma_linregress('US.BABA',120))
     #wgs.calculate_rate_of_my_schedule()
     wgs.clear_quote()
