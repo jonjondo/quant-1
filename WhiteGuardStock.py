@@ -12,7 +12,7 @@ import sendmail as sm
 import  time
 import getopt,os
 from scipy import  stats
-
+import send_wechat_msg  as wechatmsg
 
 
 path="data/"
@@ -937,6 +937,7 @@ class WhiteGuardStockCore:
         #print(df_today_selection)
         html = df2html.df_to_html(df_today_selection[['code','stock_name','operation']])
         sm.send_mail_withsub("Daily Quant Stock Selection("+ market_name +" Market)",html)
+        #wechatmsg.sendmsgtoalluser(df_today_selection.to_string())
 
 
     #还没写好，回测功能函数
@@ -1012,3 +1013,4 @@ if __name__ == "__main__":
     #print(wgs.get_stock_ma_linregress('US.BABA',120))
     #wgs.calculate_rate_of_my_schedule()
     wgs.clear_quote()
+    #wechatmsg.sendmsgtoalluser(wgs.hk_stock_list.to_string())
