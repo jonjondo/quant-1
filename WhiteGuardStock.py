@@ -937,7 +937,7 @@ class WhiteGuardStockCore:
         #print(df_today_selection)
         html = df2html.df_to_html(df_today_selection[['code','stock_name','operation']])
         sm.send_mail_withsub("Daily Quant Stock Selection("+ market_name +" Market)",html)
-        #wechatmsg.sendmsgtoalluser(df_today_selection.to_string())
+        wechatmsg.add_news("Daily Quant Stock Selection("+ market_name +" Market)",html)
 
 
     #还没写好，回测功能函数
