@@ -55,31 +55,10 @@ def json_post_data_generator_by_openid(content='Hi!你好！',openid = None):
     post_data['safe'] = '0'
     #由于字典格式不能被识别，需要转换成json然后在作post请求
     #注：如果要发送的消息内容有中文的话，第三个参数一定要设为False
-    return json.dumps(post_data)
+    return json.dumps(post_data,ensure_ascii=False)
 
-def add_news(title,html_content):
-    access_token,expires_in = get_token_info()
-    print(access_token)
-    post_url(access_token)
-    posturl = 'https://api.weixin.qq.com/cgi-bin/material/add_news?access_token=%s' %access_token
-    msg_content = {}
-    post_data={}
-    msg_content['content'] = html_content
-    msg_content['title'] = title
-    msg_content['thumb_media_id'] = "f9IEOv60y96L4b6UdeCoHhsaVL9MhZGOiR-Xh6Gqd_U"
-    msg_content['author'] = "朗天星量化机器人"
-    msg_content['digest'] = "以下是结果，仅供参考和学习分享"
-    msg_content['show_cover_pic'] = 1
-    msg_content['content_source_url'] = ""
-    msg_content['need_open_comment'] = 0
-    msg_content['content'] = 1
-    post_data['articles'] = []
-    post_data['articles'].append(msg_content)
-    post_data=json.dumps(post_data)
-    print(post_data)
-    r = requests.post(posturl,data=post_data)
-    result = r.json()
-    print(result)
+
+
 
 
     '''
@@ -119,8 +98,8 @@ def get_token_info():
 
 
 def post_url(access_token):
-    timer = threading.Timer(1000,post_url)
-    timer.start()
+    #timer = threading.Timer(1000,post_url)
+    #timer.start()
     post_url_freshing[0] = 'https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token=%s' %access_token
     #post_url_freshing[1] = 'https://api.weixin.qq.com/cgi-bin/material/add_news?access_token=%s' %access_token
     print(post_url_freshing[0])
@@ -170,6 +149,7 @@ def sendmsgtoalluser(text_str):
             print("Sent successfully")
         else:
             print (result["errmsg"])
+
 def get_pic_list():
     access_token,expires_in = get_token_info()
     print(access_token)
@@ -177,7 +157,7 @@ def get_pic_list():
     post_data['type'] = "image"
     post_data['offset'] = 0
     post_data['count'] = 10
-    post_data=json.dumps(post_data)
+    post_data=json.dumps(post_data,ensure_ascii=False)
     print(post_data)
     posturl = "https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token=%s"%access_token
     r = requests.post(posturl,data=post_data)
@@ -186,8 +166,57 @@ def get_pic_list():
     '''
     {'item': [{'media_id': 'f9IEOv60y96L4b6UdeCoHqrh0mcAlJ2jr7VkLOUAFIQ', 'name': 'Aè\x82¡.jpg', 'update_time': 1531441412, 'url': 'http://mmbiz.qpic.cn/mmbiz_jpg/5KMQniarxwicLsEQLyTDrIS0J3JPCIKcX7OHtr5qkVKvGvH6qBwzCZtnBSqbEEiaeEcicUucibXHHqcbZoYIFnS50Ow/0?wx_fmt=jpeg'}, {'media_id': 'f9IEOv60y96L4b6UdeCoHhsaVL9MhZGOiR-Xh6Gqd_U', 'name': 'æ¸¯è\x82¡.jpg', 'update_time': 1531441412, 'url': 'http://mmbiz.qpic.cn/mmbiz_jpg/5KMQniarxwicLsEQLyTDrIS0J3JPCIKcX7N0Ato4xWCSic0HG97sM9xkwIpCLpI7yiaT07TtSYicnaaqqycmtArFy8w/0?wx_fmt=jpeg'}, {'media_id': 'f9IEOv60y96L4b6UdeCoHsor75hdIKkllAaO983LE6Y', 'name': 'ç¾\x8eè\x82¡.jpg', 'update_time': 1531441412, 'url': 'http://mmbiz.qpic.cn/mmbiz_jpg/5KMQniarxwicLsEQLyTDrIS0J3JPCIKcX7tewLgmMXFYNwedWbMdibycmYMTF78fDlFXiaTIaXf7pbn5iahhOgz8DVA/0?wx_fmt=jpeg'}], 'total_count': 3, 'item_count': 3}
     '''
+def add_news(title,html_content):
+    access_token,expires_in = get_token_info()
+    print(access_token)
+    post_url(access_token)
+    posturl = 'https://api.weixin.qq.com/cgi-bin/material/add_news?access_token=%s' %access_token
+    msg_content = {}
+    post_data={}
+    msg_content['content'] = html_content
+    msg_content['title'] = title
+    msg_content['thumb_media_id'] = "f9IEOv60y96L4b6UdeCoHhsaVL9MhZGOiR-Xh6Gqd_U"
+    msg_content['author'] = u"朗天星量化机器人"
+    msg_content['digest'] = u"以下是结果，仅供参考和学习分享"
+    msg_content['show_cover_pic'] = 1
+    msg_content['content_source_url'] = ""
+    msg_content['need_open_comment'] = 0
+    post_data['articles'] = []
+    post_data['articles'].append(msg_content)
+    post_data=json.dumps(post_data,ensure_ascii=False).encode('utf-8')
+    print(post_data)
+    r = requests.post(posturl,data=post_data)
+    result = r.json()
+    print(result)
+
+    return result['media_id']
+
+
+
+def send_article_to_all(article_id):
+    #f9IEOv60y96L4b6UdeCoHhnCER-JEKPE7EUUMc0lbdg
+    access_token,expires_in = get_token_info()
+    print(access_token)
+    posturl = "https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token=%s"%access_token
+    post_data={}
+    media_list={"media_id":article_id}
+    post_data['touser'] = get_user_list(access_token)['openid']
+    #post_data['touser'].append(get_user_list(access_token)['openid'])
+    post_data['mpnews'] = media_list
+    post_data['msgtype'] = "mpnews"
+    post_data['send_ignore_reprint'] = 0
+    post_data=json.dumps(post_data,ensure_ascii=False).encode('utf-8')
+    print(post_data)
+    r = requests.post(posturl,data=post_data)
+    result = r.json()
+    print(result)
+
+def add_news_and_send_to_all(title,html_content):
+    send_article_to_all(add_news(title,html_content))
+
 
 if __name__ == "__main__":
-    sendmsgtoalluser("Best Wishes From Gua")
-    #add_news("hahahahahahaha","wangpengpengpnpagnasklfjaklds")
+    #sendmsgtoalluser("Best Wishes From Gua")
+    #add_news("这是一个测试的图文消息 ","希望可以正常显示内容")
     #get_pic_list()
+    send_article_to_all("f9IEOv60y96L4b6UdeCoHhnCER-JEKPE7EUUMc0lbdg")

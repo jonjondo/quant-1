@@ -238,7 +238,7 @@ class WhiteGuardStockCore:
                     #minaaj_index = ta.MININDEX(df['AAJ'].values[:-1], timeperiod=12)[-1]
                     #print(minaaj,minaaj_index,df.iat[-1,-1],stock_id)
                     #最新的AAJ小于0，且大于低谷，并且低谷就是近一段时间的最低值，确认反转
-                    if df.iat[-1,-1] < -20 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #-20拍脑袋的
+                    if df.iat[-1,-1] < -15 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #-20拍脑袋的
                     #if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #从-45改成0
                         info.loc[(info.code == EachStockID),'DMI2']=1
                         print("%s %s[DMI2底部反转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
@@ -538,7 +538,7 @@ class WhiteGuardStockCore:
             #提取收盘价
                 #closed=df['close'].values
                 slope, intercept, r_value, p_value, std_err = stats.linregress(df.index,df['close'].values)
-                if slope < 0:
+                if slope < -1:#斜率还需要讨论
                     return  False
                 else:
                     return  True
@@ -937,7 +937,7 @@ class WhiteGuardStockCore:
         #print(df_today_selection)
         html = df2html.df_to_html(df_today_selection[['code','stock_name','operation']])
         sm.send_mail_withsub("Daily Quant Stock Selection("+ market_name +" Market)",html)
-        wechatmsg.add_news("Daily Quant Stock Selection("+ market_name +" Market)",html)
+        wechatmsg.add_news_and_send_to_all("Daily Quant Stock Selection("+ market_name +" Market)",df_today_selection.to_string())
 
 
     #还没写好，回测功能函数
@@ -1013,4 +1013,4 @@ if __name__ == "__main__":
     #print(wgs.get_stock_ma_linregress('US.BABA',120))
     #wgs.calculate_rate_of_my_schedule()
     wgs.clear_quote()
-    #wechatmsg.sendmsgtoalluser(wgs.hk_stock_list.to_string())
+    #wechatmsg.add_news_and_send_to_all("Daily Quant Stock Selection(Test Market)",df2html.df_to_html(wgs.hk_stock_list[['code','stock_name']]))

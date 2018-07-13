@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import smtplib,time,getopt,sys  
 from email.mime.text import MIMEText  
-#mailto_list=['wangpenghehe@qq.com','11861040@qq.com','3377499@qq.com','55695287@qq.com','zhoubinjason@gmail.com']
+mailto_list=['wangpenghehe@qq.com','11861040@qq.com','3377499@qq.com','55695287@qq.com','zhoubinjason@gmail.com']
 mailbcc_list=['2838919549@qq.com']
 mailcc_list=['']
-mailto_list=['wangpenghehe@qq.com']
+#mailto_list=['wangpenghehe@qq.com']
 '''
 
 11861040@qq.com
