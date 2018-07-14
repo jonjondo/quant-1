@@ -934,8 +934,8 @@ class WhiteGuardStockCore:
         df_today_selection = pd.concat([df_selected,df_storage_to_sell],axis=0)
         #print(df_today_selection)
         html = df2html.df_to_html(df_today_selection[['code','stock_name','operation']])
-        #sm.send_mail_withsub("Daily Quant Stock Selection("+ market_name +" Market)",html)
-        wechatmsg.add_news_and_send_to_all("Daily Quant Stock Selection("+ market_name +" Market)",html,market)
+        sm.send_mail_withsub("Daily Quant("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html)
+        wechatmsg.add_news_and_send_to_all("Daily Quant("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html,market)
         #wechatmsg.sendmsgtoalluser("Daily Quant("+ market_name +" Market)\n" +df_today_selection[['code','stock_name','operation']].to_string(index=False,header=False))
 
 
