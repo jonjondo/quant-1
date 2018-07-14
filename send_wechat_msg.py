@@ -186,7 +186,7 @@ def add_news(title,html_content,market):
 
     msg_content['thumb_media_id'] = "f9IEOv60y96L4b6UdeCoHhsaVL9MhZGOiR-Xh6Gqd_U"
     msg_content['author'] = u"朗天星量化机器人"
-    msg_content['digest'] = u"以下是结果，仅供参考和学习分享"
+    msg_content['digest'] = u"以下结果仅供参考和学习分享，不构成投资建议"
     msg_content['show_cover_pic'] = 1
     msg_content['content_source_url'] = ""
     msg_content['need_open_comment'] = 0
