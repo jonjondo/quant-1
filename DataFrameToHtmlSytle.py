@@ -30,17 +30,22 @@ def color_negative_red_num(val):
 
 
 def csv_to_html():
-    df = pb.read_csv("us_market.csv")
-
+    df = pb.read_csv("data/us_market.csv")
+    df['operation']="BUY"
     html = (
     df.style
     .applymap(color_negative_red, subset=['operation'])
     .set_properties(**{'font-size': '9pt', 'font-family': 'Calibri','align':'center', 'border-style':'solid', 'border-width':'1px','border-color': 'gray','border-spacing':'0px'})
     .set_caption("Quant From Gua")
+    .set_table_styles(\
+        [{'selector': '.row_heading',\
+          'props': [('display', 'none')]},\
+         {'selector': '.blank.level0',\
+          'props': [('display', 'none')]}])
     .render()
 )
     print(html)
-    with open(".html",'w') as f:
+    with open("test.html",'w') as f:
         f.write(html)
         f.close()
         
@@ -49,7 +54,7 @@ def df_to_htmlfile(df):
     html = (
     df.style
     .applymap(color_negative_red_num,subset=['KDJ','DMI2','MACROSS','MACD','NEWHIGH'])
-    .set_properties(**{'font-size': '9pt', 'font-family': 'Calibri','align':'center', 'border-style':'solid', 'border-width':'1px','border-color': 'gray','border-spacing':'0px'})
+    .set_properties(**{'font-size': '7pt', 'font-family': 'Calibri','align':'center', 'border-style':'solid', 'border-width':'1px','border-color': 'gray','border-spacing':'0px'})
     .set_caption("Quant From Gua")
     .render()
 )
@@ -61,16 +66,20 @@ def df_to_html(df):
     html = (
     df.style
     .applymap(color_negative_red, subset=['operation'])
-    .set_properties(**{'font-size': '9pt', 'font-family': 'Calibri','align':'center', 'border-style':'solid', 'border-width':'1px','border-color': 'gray','border-spacing':'0px'})
+    .set_properties(**{'font-size': '7pt', 'font-family': 'Calibri','align':'center', 'border-style':'solid', 'border-width':'1px','border-color': 'gray','border-spacing':'0px'})
     .set_caption("Quant From Gua")
+    .set_table_styles(\
+    [{'selector': '.row_heading',\
+      'props': [('display', 'none')]},\
+     {'selector': '.blank.level0',\
+      'props': [('display', 'none')]}])
     .render()
      )
     return html
 
 
 if __name__ == "__main__":
-	df =  pb.DataFrame()
-	df_to_htmlfile(df)
+	csv_to_html()
 
 
 
