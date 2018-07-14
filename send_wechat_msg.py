@@ -55,7 +55,7 @@ def json_post_data_generator_by_openid(content='Hi!你好！',openid = None):
     post_data['safe'] = '0'
     #由于字典格式不能被识别，需要转换成json然后在作post请求
     #注：如果要发送的消息内容有中文的话，第三个参数一定要设为False
-    return json.dumps(post_data,ensure_ascii=False)
+    return json.dumps(post_data,ensure_ascii=False).encode('utf-8')
 
 
 
@@ -166,7 +166,7 @@ def get_pic_list():
     '''
     {'item': [{'media_id': 'f9IEOv60y96L4b6UdeCoHqrh0mcAlJ2jr7VkLOUAFIQ', 'name': 'Aè\x82¡.jpg', 'update_time': 1531441412, 'url': 'http://mmbiz.qpic.cn/mmbiz_jpg/5KMQniarxwicLsEQLyTDrIS0J3JPCIKcX7OHtr5qkVKvGvH6qBwzCZtnBSqbEEiaeEcicUucibXHHqcbZoYIFnS50Ow/0?wx_fmt=jpeg'}, {'media_id': 'f9IEOv60y96L4b6UdeCoHhsaVL9MhZGOiR-Xh6Gqd_U', 'name': 'æ¸¯è\x82¡.jpg', 'update_time': 1531441412, 'url': 'http://mmbiz.qpic.cn/mmbiz_jpg/5KMQniarxwicLsEQLyTDrIS0J3JPCIKcX7N0Ato4xWCSic0HG97sM9xkwIpCLpI7yiaT07TtSYicnaaqqycmtArFy8w/0?wx_fmt=jpeg'}, {'media_id': 'f9IEOv60y96L4b6UdeCoHsor75hdIKkllAaO983LE6Y', 'name': 'ç¾\x8eè\x82¡.jpg', 'update_time': 1531441412, 'url': 'http://mmbiz.qpic.cn/mmbiz_jpg/5KMQniarxwicLsEQLyTDrIS0J3JPCIKcX7tewLgmMXFYNwedWbMdibycmYMTF78fDlFXiaTIaXf7pbn5iahhOgz8DVA/0?wx_fmt=jpeg'}], 'total_count': 3, 'item_count': 3}
     '''
-def add_news(title,html_content):
+def add_news(title,html_content,market):
     access_token,expires_in = get_token_info()
     print(access_token)
     post_url(access_token)
@@ -175,6 +175,15 @@ def add_news(title,html_content):
     post_data={}
     msg_content['content'] = html_content
     msg_content['title'] = title
+    if market == 0:
+	    msg_content['thumb_media_id']  = "f9IEOv60y96L4b6UdeCoHqrh0mcAlJ2jr7VkLOUAFIQ"
+    elif market == 1:
+	    msg_content['thumb_media_id']  = "f9IEOv60y96L4b6UdeCoHhsaVL9MhZGOiR-Xh6Gqd_U"
+    elif market == 2:
+	    msg_content['thumb_media_id']  = "f9IEOv60y96L4b6UdeCoHsor75hdIKkllAaO983LE6Y"
+    else:
+        msg_content['thumb_media_id']  = "f9IEOv60y96L4b6UdeCoHhsaVL9MhZGOiR-Xh6Gqd_U"
+
     msg_content['thumb_media_id'] = "f9IEOv60y96L4b6UdeCoHhsaVL9MhZGOiR-Xh6Gqd_U"
     msg_content['author'] = u"朗天星量化机器人"
     msg_content['digest'] = u"以下是结果，仅供参考和学习分享"
@@ -197,22 +206,47 @@ def send_article_to_all(article_id):
     #f9IEOv60y96L4b6UdeCoHhnCER-JEKPE7EUUMc0lbdg
     access_token,expires_in = get_token_info()
     print(access_token)
-    posturl = "https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token=%s"%access_token
+    posturl = 'https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token=%s' %access_token
     post_data={}
+
+    '''
+    群发部分代码注释掉
     media_list={"media_id":article_id}
     post_data['touser'] = get_user_list(access_token)['openid']
     #post_data['touser'].append(get_user_list(access_token)['openid'])
     post_data['mpnews'] = media_list
     post_data['msgtype'] = "mpnews"
     post_data['send_ignore_reprint'] = 0
-    post_data=json.dumps(post_data,ensure_ascii=False).encode('utf-8')
-    print(post_data)
-    r = requests.post(posturl,data=post_data)
-    result = r.json()
-    print(result)
 
-def add_news_and_send_to_all(title,html_content):
-    send_article_to_all(add_news(title,html_content))
+
+    {
+    "touser":"OPENID",
+    "msgtype":"mpnews",
+    "mpnews":
+    {
+         "media_id":"MEDIA_ID"
+    }
+}
+    '''
+    openidlist = get_user_list(access_token)
+    for openid in openidlist['openid']:
+        print(openid)
+        post_data['touser'] = "%s"%(openid)
+        post_data['msgtype']="mpnews"
+        post_data['mpnews'] = {"media_id":article_id}
+        post_data=json.dumps(post_data,ensure_ascii=False).encode('utf-8')
+        #print(post_data)
+        r = requests.post(posturl,data=post_data)
+        result = r.json()
+        if result["errcode"] == 0:
+            print("Sent to %s successfully"%openid)
+        else:
+            print (result["errmsg"])
+        post_data={}
+
+
+def add_news_and_send_to_all(title,html_content,market):
+    send_article_to_all(add_news(title,html_content,market))
 
 
 if __name__ == "__main__":

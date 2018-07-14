@@ -263,7 +263,7 @@ class WhiteGuardStockCore:
         print("---------------------------DMI2买入指标-------------------------------")
         self.final_selected_stock = info.loc[(info['DMI2'] == 1) & (info['MACD'] == 1)] #df_last_ret[(df_last_ret['MACD'] <= df_last_ret['MACDsignal']) & (df_last_ret['MACD_DIS'] <= 0.5) & (df_last_ret['AAJ_FLAG'] == 1)]
         print(self.final_selected_stock['code'])
-        info.to_csv(os.path.join(path,'tempfile/量化结果汇总_'+ str(market) + '_' + time.strftime("%Y%m%d",time.localtime(time.time())) + '.csv'))
+        info.to_csv(os.path.join(path,'tempfile/量化结果汇总_'+ str(market) + '_' + time.strftime("%Y%m%d",time.localtime(time.time())) + '.csv'),index=False)
         #df2html.df_to_htmlfile(info)
         #html = df2html.df_to_html(df)
         #print(html)
@@ -565,8 +565,6 @@ class WhiteGuardStockCore:
             df['h-c']=abs(high-close.shift(1))
             df['l-c']=abs(close.shift(1)-low)
             df['tr']=df.max(axis=1)
-
-
             #df['tr']=ta.EMA(df['tr'],N)
             #EXPMEMA(MAX(MAX(HIGH-LOW,ABS(HIGH-REF(CLOSE,1))),ABS(REF(CLOSE,1)-LOW)),N);
             df['PDM']=high-high.shift(1)
@@ -913,7 +911,7 @@ class WhiteGuardStockCore:
         print("------------------"+ market_name +"结束----------------------")
         df_storage =pd.DataFrame()
         try:
-            df_selected.to_csv(os.path.join(path,"tempfile/"+ market_name +"_schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv"),columns=['code','stock_name'])
+            df_selected.to_csv(os.path.join(path,"tempfile/"+ market_name +"_schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv"),columns=['code','stock_name'],index=False)
             with open(os.path.join(path,"tempfile/"+ market_name +"_storagelist.csv"), 'rb') as f:
                     result = chardet.detect(f.read())
                     df_storage = pb.read_csv(os.path.join(path,"tempfile/"+ market_name +"_storagelist.csv"),encoding=result['encoding'])
@@ -926,7 +924,7 @@ class WhiteGuardStockCore:
         df_storage_keep = df_storage_keep[['code','stock_name']]
         #df_storage_to_sell = df_storage[(df_storage['code'].isin(df_sell['code']))]
         df_storage_to_sell=wgs.df_total.loc[(wgs.df_total['DMI2'] == -1)]
-        df_storage_keep.to_csv(os.path.join(path,"tempfile/"+ market_name +"_storagelist.csv"),columns=['code','stock_name'])
+        df_storage_keep.to_csv(os.path.join(path,"tempfile/"+ market_name +"_storagelist.csv"),columns=['code','stock_name'],index=False)
         df_storage_to_sell = df_storage_to_sell[['code','stock_name']]
         df_storage_to_sell['operation'] = 'SELL'
         print("--------------"+ market_name +"市场以下持仓应该卖出-----------------")
@@ -936,8 +934,9 @@ class WhiteGuardStockCore:
         df_today_selection = pd.concat([df_selected,df_storage_to_sell],axis=0)
         #print(df_today_selection)
         html = df2html.df_to_html(df_today_selection[['code','stock_name','operation']])
-        sm.send_mail_withsub("Daily Quant Stock Selection("+ market_name +" Market)",html)
-        wechatmsg.add_news_and_send_to_all("Daily Quant Stock Selection("+ market_name +" Market)",df_today_selection.to_string())
+        #sm.send_mail_withsub("Daily Quant Stock Selection("+ market_name +" Market)",html)
+        wechatmsg.add_news_and_send_to_all("Daily Quant Stock Selection("+ market_name +" Market)",html,market)
+        #wechatmsg.sendmsgtoalluser("Daily Quant("+ market_name +" Market)\n" +df_today_selection[['code','stock_name','operation']].to_string(index=False,header=False))
 
 
     #还没写好，回测功能函数
