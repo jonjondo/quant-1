@@ -45,7 +45,10 @@ class WhiteGuardStockCore:
         self.quote_ctx.close()
 
     def __del__(self):
-        self.quote_ctx.close()
+        try:
+            self.quote_ctx.close()
+        except:
+            pass
 
 
 
@@ -938,7 +941,14 @@ class WhiteGuardStockCore:
         wechatmsg.add_news_and_send_to_all("Daily Quant("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html,market)
         #wechatmsg.sendmsgtoalluser("Daily Quant("+ market_name +" Market)\n" +df_today_selection[['code','stock_name','operation']].to_string(index=False,header=False))
 
+    def test_notification(self):
+        df_storage = pb.read_csv(os.path.join(path,"tempfile/US_storagelist.csv"),encoding='gbk')
 
+        df_storage['operation'] = 'BUY'
+        print(df_storage)
+        html = df2html.df_to_html(df_storage)
+        sm.send_mail_withsub("Daily Quant(Test Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html)
+        wechatmsg.add_news_and_send_to_all("Daily Quant(Test Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html,market)
     #还没写好，回测功能函数
     def calculate_rate_of_my_schedule(self):
         end_day=datetime.date(datetime.date.today().year,datetime.date.today().month,datetime.date.today().day)
@@ -1013,3 +1023,4 @@ if __name__ == "__main__":
     #wgs.calculate_rate_of_my_schedule()
     wgs.clear_quote()
     #wechatmsg.add_news_and_send_to_all("Daily Quant Stock Selection(Test Market)",df2html.df_to_html(wgs.hk_stock_list[['code','stock_name']]))
+    #wgs.test_notification()
