@@ -13,6 +13,7 @@ import  time
 import getopt,os
 from scipy import  stats
 import send_wechat_msg  as wechatmsg
+from stock_user_manager import StockUserMgr
 
 
 path="data/"
@@ -23,7 +24,7 @@ class WhiteGuardStockCore:
         # self.api_port = dst_port
         # self.quote_ctx = OpenQuoteContext(self.api_ip, self.api_port)
         self.df_total = pd.DataFrame()
-
+        self.smgr = StockUserMgr()
     def start_connect(self,dst_ip,dst_port):
         self.quote_ctx = OpenQuoteContext(dst_ip, dst_port)
 
@@ -912,6 +913,11 @@ class WhiteGuardStockCore:
         print("--------------以下为"+ market_name +"今日选股-----------------")
         print(df_selected)
         print("------------------"+ market_name +"结束----------------------")
+        # if len(df_selected.index) > 0:
+        #     for i in range(len(df_selected.index)):
+        #         self.smgr.update_stock_operation(df_selected.ix[i,'code'],1)
+        #         self.smgr.search_stockrecord_by_stockcode(df_selected.ix[i,'code'])
+
         df_storage =pd.DataFrame()
         try:
             df_selected.to_csv(os.path.join(path,"tempfile/"+ market_name +"_schedule"+ time.strftime("%Y%m%d",time.localtime(time.time())) +".csv"),columns=['code','stock_name'],index=False)
@@ -933,13 +939,26 @@ class WhiteGuardStockCore:
         print("--------------"+ market_name +"市场以下持仓应该卖出-----------------")
         print(df_storage_to_sell)
         print("------------------"+ market_name +"卖出标志结束-----------------------")
-
+        # if len(df_storage_to_sell.index) > 0:
+        #     for i in range(len(df_storage_to_sell.index)):
+        #         print(i,df_storage_to_sell.ix[i,'code'])
+        #         self.smgr.update_stock_operation(df_storage_to_sell.ix[i,'code'],-1)
+        #         self.smgr.search_stockrecord_by_stockcode(df_storage_to_sell.ix[i,'code'])
         df_today_selection = pd.concat([df_selected,df_storage_to_sell],axis=0)
         #print(df_today_selection)
         html = df2html.df_to_html(df_today_selection[['code','stock_name','operation']])
-        sm.send_mail_withsub("Daily Quant("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html)
-        wechatmsg.add_news_and_send_to_all("Daily Quant("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html,market)
+        #sm.send_mail_withsub("Daily Quant("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html)
+        #wechatmsg.add_news_and_send_to_all("Daily Quant("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html,market)
         #wechatmsg.sendmsgtoalluser("Daily Quant("+ market_name +" Market)\n" +df_today_selection[['code','stock_name','operation']].to_string(index=False,header=False))
+
+        for i in range(len(df_today_selection.index)):
+            oper = 0
+            if df_today_selection.iloc[i]['operation'] == 'SELL':
+                oper = -1
+            else:
+                oper = 1
+            self.smgr.update_stock_operation(df_today_selection.iloc[i]['code'],oper)
+            self.smgr.search_stockrecord_by_stockcode(df_today_selection.iloc[i]['code'])
 
     def test_notification(self):
         df_storage = pb.read_csv(os.path.join(path,"tempfile/US_storagelist.csv"),encoding='gbk')
@@ -949,6 +968,16 @@ class WhiteGuardStockCore:
         html = df2html.df_to_html(df_storage)
         sm.send_mail_withsub("Daily Quant(Test Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html)
         wechatmsg.add_news_and_send_to_all("Daily Quant(Test Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html,market)
+        for i in range(len(df_storage.index)):
+            oper = 0
+            self.smgr.search_stockrecord_by_stockcode(df_storage.ix[i,'code'])
+            print()
+            if df_storage.iloc[i]['operation'] == 'SELL':
+                oper = -1
+            else:
+                oper = 1
+            print(df_storage.ix[i,'operation'],oper)
+
     #还没写好，回测功能函数
     def calculate_rate_of_my_schedule(self):
         end_day=datetime.date(datetime.date.today().year,datetime.date.today().month,datetime.date.today().day)
