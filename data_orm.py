@@ -45,8 +45,8 @@ class StockRecord(Base):
     __tablename__ = 'stockrecord'
     # 表的结构
     id = Column(Integer, primary_key=True,autoincrement=True)
-    stockid = Column(Integer,ForeignKey('stock.id'))
-    userid = Column(Integer,ForeignKey('wxuser.id'))
+    stockid = Column(String(10),ForeignKey('stock.id'))
+    userid = Column(String(10),ForeignKey('wxuser.id'))
     operation  = Column(Integer)
     recordtime = Column(Integer)
 
