@@ -11,7 +11,7 @@ class User(Base):
     __tablename__ = 'wxuser'
     # 表的结构
     id = Column(Integer, primary_key=True,autoincrement=True)
-    useropenid = Column(String(28))
+    useropenid = Column(String(30))
     name = Column(String(20))
     remark = Column(String(20))
     groupid = Column(String(20))
@@ -45,8 +45,9 @@ class StockRecord(Base):
     __tablename__ = 'stockrecord'
     # 表的结构
     id = Column(Integer, primary_key=True,autoincrement=True)
-    stockid = Column(String(10),ForeignKey('stock.id'))
-    userid = Column(String(10),ForeignKey('wxuser.id'))
+    stockid = Column(String(10))
+    stockname = Column(String(25))
+    userid = Column(String(30))
     operation  = Column(Integer)
     recordtime = Column(Integer)
 
