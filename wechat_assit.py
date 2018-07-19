@@ -11,6 +11,7 @@ APPSECRET = "772cba9ec8991bc97b145a240c9f48af"
 session = None
 
 
+client = WeChatClient('wx8e5ae8389bb42ffe', '772cba9ec8991bc97b145a240c9f48af')
 
 def update_wechat_userinfo(client,session):
     user = client.user.get_followers()
@@ -66,14 +67,14 @@ def send_template_msg(userid,stockname,stockid,price,operation):
 if __name__ == "__main__":
     client = WeChatClient('wx8e5ae8389bb42ffe', '772cba9ec8991bc97b145a240c9f48af')
     # 初始化数据库连接
-    engine = create_engine('mysql+pymysql://root:@localhost:3306/quant')
+    engine = create_engine('mysql+pymysql://root:langzm@localhost:3306/quant?charset=utf8')
     # 创建DBSession类型
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
-    #update_wechat_userinfo(client,session)
+    update_wechat_userinfo(client,session)
     #search_user_by_name('==')
-    send_template_msg('o48rB0qa3htdR_RzzG7seKSuEPsY','腾讯控股','HK.00700',420,'SELL')
-    send_template_msg('o48rB0qa3htdR_RzzG7seKSuEPsY','新城发展控股','HK.01030',6.5,'BUY')
+    #send_template_msg('o48rB0jO_sMoLTa7iuco_T0l3Ucw','舍图控股','HK.08392',0.89,'SELL')
+    #send_template_msg('o48rB0sXHkHtzJreikUonwvJBJB0','新城发展控股','HK.01030',6.5,'BUY')
 
 
 

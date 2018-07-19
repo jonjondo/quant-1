@@ -3,8 +3,10 @@ from data_orm import *
 import time
 import pandas as pd
 import chardet
-
+from wechat_assit import *
 session=''
+userlist=[]
+stocklist=[]
 def add_stock_record(stock_code,wxuser_openid,operation):
     stock = session.query(Stock).filter(Stock.stockcode == stock_code).first()
     user = session.query(User).filter(User.useropenid == wxuser_openid).first()
@@ -65,8 +67,25 @@ def add_stockrecord_from_csv(file):
         #add_stock(df.ix[i,'code'],df.ix[i,'stock_name'],df.ix[i,'industry'].astype(str),df.ix[i,'market'].astype(str),df.ix[i,'operation'].astype(str)
         #add_stock_record(df.ix[i,'code'],df.ix[i,'useropenid'],0)
         add_stock_record(df.ix[i,'code'],df.ix[i,'useropenid'],df.ix[i,'operation'].astype(str)) 
-
-
+def search_stockrecord_by_stockcode(stock_code):
+    stockrecord = session.query(StockRecord).filter(StockRecord.stockid == stock_code).all()
+    if stockrecord != None:
+        for sr in stockrecord:
+            #print(sr.stockid,sr.userid,sr.operation)
+            oper='WAIT' 
+            if sr.operation == -1:
+                oper='SELL'
+            elif sr.operation == 1:
+                oper='BUY'
+            else:
+                oper='WAIT'
+            #print(sr.userid,sr.stockid,search_stockname_by_stockcode(sr.stockid),'--',oper) 
+            send_template_msg(sr.userid,sr.stockid,search_stockname_by_stockcode(sr.stockid),'--',oper) 
+    return stockrecord
+def search_stockname_by_stockcode(stock_code):
+    stock = session.query(Stock).filter(Stock.stockcode == stock_code).first()
+    if stock != None:
+        return stock.stockname
 
 if __name__ == "__main__":
     # 初始化数据库连接
@@ -74,4 +93,8 @@ if __name__ == "__main__":
     # 创建DBSession类型
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
-    add_stockrecord_from_csv('data/stockimport.csv')
+    #add_stockrecord_from_csv('data/stockimport.csv')
+    #stocklist = session.query(Stock).all()
+    #userlist = session.query(User).all()
+    search_stockrecord_by_stockcode('SZ.300338')
+    search_stockrecord_by_stockcode('SH.600279')
