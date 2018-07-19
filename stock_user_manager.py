@@ -17,7 +17,7 @@ def add_stock_record(stock_code,wxuser_openid,operation):
             operation  = Column(Integer)
             recordtime = Column(Integer)
             '''
-            s=StockRecord(stockid=stock_code,userid=wxuser_openid,operation=operation,recordtime=time.strftime("%Y%m%d %H:%M",time.localtime(time.time())))
+            s=StockRecord(stockid=stock_code,userid=wxuser_openid,operation=operation,recordtime=int(time.time()))
             session.add(s)
         session.commit()
     else:
@@ -61,14 +61,16 @@ def add_stockrecord_from_csv(file):
     '''
     for i in range(len(df.index)):
         #print(df.ix[i,'code'],df.ix[i,'stock_name'],df.ix[i,'industry'],df.ix[i,'market'],df.ix[i,'operation'])
-        add_stock(df.ix[i,'code'],df.ix[i,'stock_name'],df.ix[i,'industry'],df.ix[i,'market'],df.ix[i,'operation'])
-        add_stock_record(df.ix[i,'code'],df.ix[i,'stock_name'],int(df.ix[i,'operation']))
+        #print(type(df.ix[i,'code']),df.ix[i,'stock_name'],df.ix[i,'industry'],df.ix[i,'market'],df.ix[i,'operation'].astype('int'))
+        #add_stock(df.ix[i,'code'],df.ix[i,'stock_name'],df.ix[i,'industry'].astype(str),df.ix[i,'market'].astype(str),df.ix[i,'operation'].astype(str)
+        #add_stock_record(df.ix[i,'code'],df.ix[i,'useropenid'],0)
+        add_stock_record(df.ix[i,'code'],df.ix[i,'useropenid'],df.ix[i,'operation'].astype(str)) 
 
 
 
 if __name__ == "__main__":
     # 初始化数据库连接
-    engine = create_engine('mysql+pymysql://root:@localhost:3306/quant')
+    engine = create_engine('mysql+pymysql://root:langzm@localhost:3306/quant')
     # 创建DBSession类型
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
