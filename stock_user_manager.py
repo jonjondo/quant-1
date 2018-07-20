@@ -19,7 +19,7 @@ class StockUserMgr:
         stock = self.session.query(Stock).filter(Stock.stockcode == stock_code).first()
         user = self.session.query(User).filter(User.useropenid == wxuser_openid).first()
         if stock !=  None and user != None:
-            stockrecord = session.query(StockRecord).filter(StockRecord.stockid == stock_code).first()
+            stockrecord = self.session.query(StockRecord).filter(StockRecord.stockid == stock_code,StockRecord.userid == wxuser_openid).first()
             if stockrecord == None:
                 '''
                 stockid = Column(Integer,ForeignKey('stock.id'))
