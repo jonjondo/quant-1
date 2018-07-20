@@ -14,6 +14,8 @@ class StockUserMgr:
         # 创建DBSession类型
         DBSession = sessionmaker(bind=self.engine)
         self.session = DBSession()
+    def __del__(self):
+        self.session.close()
 
     def add_stock_record(self,stock_code,stock_name,wxuser_openid,operation):
         stock = self.session.query(Stock).filter(Stock.stockcode == stock_code).first()

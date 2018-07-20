@@ -72,6 +72,7 @@ if __name__ == "__main__":
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
     update_wechat_userinfo(client,session)
+    session.close()
     #search_user_by_name('==')
     #send_template_msg('o48rB0jO_sMoLTa7iuco_T0l3Ucw','舍图控股','HK.08392',0.89,'SELL')
     #send_template_msg('o48rB0sXHkHtzJreikUonwvJBJB0','新城发展控股','HK.01030',6.5,'BUY')
