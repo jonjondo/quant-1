@@ -10,9 +10,9 @@ stocklist=[]
 
 class StockUserMgr:
     def __init__(self):
-        self.engine = create_engine('mysql+pymysql://root:@localhost:3306/quant')
+        self.engine = create_engine('mysql+pymysql://root:langzm@localhost:3306/quant')
         # 创建DBSession类型
-        DBSession = sessionmaker(bind=engine)
+        DBSession = sessionmaker(bind=self.engine)
         self.session = DBSession()
 
     def add_stock_record(self,stock_code,stock_name,wxuser_openid,operation):
