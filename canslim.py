@@ -162,7 +162,7 @@ def merge_canslim_c_result():
 
     #print(df_high_growth.head())
 
-    df_high_profits['total_rate'] = df_high_profits['business_income_good']*2.5+ df_high_profits['roe_good']*1.75+ df_high_profits['gross_profit_rate_good']*1.75 + df_high_profits['profits_yoy_good']*1 + df_high_profits['nprg_good']*1  + df_high_profits['cashflowratio_good']*2
+    df_high_profits['total_rate'] = df_high_profits['business_income_good']*2.75+ df_high_profits['roe_good']*1.75+ df_high_profits['gross_profit_rate_good']*2 + df_high_profits['profits_yoy_good']*1 + df_high_profits['nprg_good']*1.5  + df_high_profits['cashflowratio_good']*1
     #df_high_profits.to_csv(os.path.join(path,"df_high_profits.csv"))
     df_high_profits= df_high_profits.sort_values(by=['total_rate'],ascending=False)
     df_high_profits = changeOutPutColName(df_high_profits)
