@@ -224,7 +224,7 @@ class WhiteGuardStockCore:
                 #     print("%s %s[站上20日线]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
                 #     info.loc[(info.code == EachStockID),'MA20']=1
 
-                if self.get_stock_ma_linregress(EachStockID,120) == True:
+                if self.get_stock_ma_linregress(EachStockID,120,-1,-999) == True:
                     print("%s %s[MA120上升]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
                     info.loc[(info.code == EachStockID),'MA120Status']=1
 
@@ -526,7 +526,7 @@ class WhiteGuardStockCore:
             print("%s 错误：%s 返回结果%s in %s"% (stock_data['code'],e,stock_data,"get_stock_my_schedule_signal"))
             return  stock_data
     #MA的线性回归的斜率
-    def get_stock_ma_linregress(self,stock_id,days):
+    def get_stock_ma_linregress(self,stock_id,days,line_slope_up,line_slope_low):
         end_day=datetime.date(datetime.date.today().year,datetime.date.today().month,datetime.date.today().day)
         days=days*7/5
         #考虑到周六日非交易
@@ -542,7 +542,7 @@ class WhiteGuardStockCore:
             #提取收盘价
                 #closed=df['close'].values
                 slope, intercept, r_value, p_value, std_err = stats.linregress(df.index,df['close'].values)
-                if slope < -1:#斜率还需要讨论
+                if slope > line_slope_up or  slope < line_slope_low:#斜率还需要讨论
                     return  False
                 else:
                     return  True
@@ -551,9 +551,26 @@ class WhiteGuardStockCore:
             print("错误：%s,返回结果%s in get_stock_ma_linregress"% (e,df))
 
 
-
-
-
+    def get_increase_stock(self,market,days):
+        self.init_cn_stock(os.path.join(path,"stocklist.csv"))
+        #wgs.loop_all_cn_stocks('futu',30,0)
+        self.init_hk_stock(os.path.join(path,"HSIIndexList.csv"))
+        self.init_us_stock(os.path.join(path,"us_market.csv"))
+        if market == 0:
+	        info = self.cn_stock_list
+        elif market == 1:
+	        info = self.hk_stock_list
+        elif market == 2:
+	        info = self.us_stock_list
+        else:
+            info = self.cn_stock_list
+        df_increase = pd.DataFrame()
+        for eachid in info.code:
+            if self.get_stock_ma_linregress(eachid,days,1,0) == True:
+                df_increase=df_increase.append(info.loc[info['code'] == eachid,('code','stock_name')],ignore_index=True)
+        df_increase.drop_duplicates(['code'])
+        print(df_increase)
+        df_increase.to_csv((os.path.join(path,"increase_"+ str(market)+ "_" + str(days)  +".csv")))
 
 
 
@@ -1047,6 +1064,8 @@ if __name__ == "__main__":
     #wgs.get_stock_dmi_my_signal_min('HK.02382',15)
     #每日运行选股
     wgs.get_everyday_schedule(int(market))
+    #选出均线趋势股，主要还是上涨趋势的。
+    #wgs.get_increase_stock(1,60)
     #回测功能
     #print(wgs.get_stock_ma_linregress('US.BABA',120))
     #wgs.calculate_rate_of_my_schedule()
