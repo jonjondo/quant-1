@@ -36,47 +36,7 @@ from datetime import datetime, timedelta, time
 from time import gmtime, strftime
 import time as t
 
-api_ip = '119.29.141.202'  # '119.29.141.202'这里要使用本地客户端
-api_port = 11111
-
-
-class EmailNotification(object):
-    """邮件提醒类"""
-    sender = 'mr_right_words@outlook.com'
-    password = 'CatsHateDogs66?'
-    smtpserver = 'smtp.office365.com'
-    enable = True
-
-    @staticmethod
-    def set_enable(enable=False):
-        EmailNotification.enable = enable
-
-    @staticmethod
-    def is_enable():
-        return EmailNotification.enable
-
-    @staticmethod
-    def send_email(receiver, subject, words):
-        if not EmailNotification.is_enable():
-            return
-        try:
-            msg = MIMEText(words, 'plain', 'utf-8')  # 中文需参数‘utf-8'，单字节字符不需要
-            msg['Subject'] = Header(subject, 'utf-8')  # 邮件标题
-            msg['from'] = EmailNotification.sender  # 发信人地址
-            msg['to'] = receiver  # 收信人地址
-
-            smtp = smtplib.SMTP()
-            smtp.connect(EmailNotification.smtpserver, 587)
-            smtp.starttls()
-            smtp.ehlo()
-            smtp.login(EmailNotification.sender, EmailNotification.password)
-            smtp.sendmail(EmailNotification.sender, receiver,
-                          msg.as_string())  # 这行代码解决的下方554的错误
-            print("Before smtp quit")
-            smtp.quit()
-            print("邮件发送成功!")
-        except Exception as e:
-            print(e)
+from stock_user_manager import StockUserMgr
 
 
 def get_stock_dmi_my_signal(quote_ctx, stock_id, market_snap_data):
@@ -137,19 +97,6 @@ def get_stock_dmi_my_signal(quote_ctx, stock_id, market_snap_data):
         df['AAJ'] = ta.EMA(3 * df['ADX'] - 2 * df['ADXR'], 2)
 
         dfret = pd.concat([dfret, df], axis=1)
-
-    # return df['PDI'],df['MDI'],df['ADX'],df['ADXR']
-    ## quote_ctx.close()
-
-    """"
-    fig = plt.figure(figsize=[18, 5])
-    plt.plot(df.index, df['AAJ'], label='AAJ')
-    plt.legend(loc='best')
-    ## plt.plot(df)
-    plt.grid()
-    # 记得加这一句，不然不会显示图像
-    plt.show()
-    """""
     return df['AAJ'], ma20
 
 def aaj_out_bound(upper, lower, aaj):
@@ -163,7 +110,7 @@ def time_in_range(start, end, x):
         return start <= x or x <= end
 
 
-def my_monitor(quote_ctx, session):
+def my_monitor(quote_ctx, mgr):
     # 读取数据库记录
     stocks_to_user_emails = {}
     trend_record = {}
@@ -171,11 +118,7 @@ def my_monitor(quote_ctx, session):
     aaj_upper = 75
     aaj_lower = -75.46
 
-    sm = StockUserMgr()
-
-    # stocks = self.session.query(stocks)
-    stocks = session.query(Stock)
-    stock_ids = list(map(lambda stock : stock.stockcode), stocks)
+    stock_ids = mgr.get_all_stock_ids()
 
     # 股票分类
     china_list = list(filter(lambda x: ("HK" in x[:2]) or ("SH" in x[:2]) or ("SZ" in x[:2]), stock_ids))
@@ -253,22 +196,7 @@ def my_monitor(quote_ctx, session):
         # decision = "SELL"
         # elif curr_aaj > prev_aaj:
         # decision = "BUY"
-
-        if descision != "":
-            stockrecord = session.query(StockRecord).filter(StockRecord.stockid == stock).all()
-            if stockrecord != None:
-                for sr in stockrecord:
-                    # print(sr.stockid,sr.userid,sr.operation)
-                    oper = 'WAIT'
-                    if sr.operation == -1:
-                        oper = 'SELL'
-                    elif sr.operation == 1:
-                        oper = 'BUY'
-                    else:
-                        oper = 'WAIT'
-                    # print(sr.userid,sr.stockid,search_stockname_by_stockcode(sr.stockid),'--',oper)
-                    if oper != descision:
-                        wa.send_template_msg(sr.userid, sr.stockid, sr.stockname, '--', op)
+        mgr.search_stockrecord_by_stockcode(descision, op)
 
 
 if __name__ == "__main__":
@@ -276,10 +204,8 @@ if __name__ == "__main__":
     API_SVR_PORT = 11111
     quote_ctx = OpenQuoteContext(host=API_SVR_IP, port=API_SVR_PORT)  # 创建行情api
 
-    engine = create_engine('mysql+pymysql://root:langzm@localhost:3306/quant?charset=utf8')
-    DBSession = sessionmaker(bind=engine)
-    session = DBSession()
-    my_monitor(quote_ctx, session)
+    mgr = StockUserMgr()
+    my_monitor(quote_ctx, mgr)
     quote_ctx.close()
 
 

@@ -17,6 +17,10 @@ class StockUserMgr:
     def __del__(self):
         self.session.close()
 
+    def get_all_stock_ids(self):
+        stocks = session.query(Stock)
+        return list(map(lambda stock: stock.stockcode), stocks)
+
     def add_stock_record(self,stock_code,stock_name,wxuser_openid,operation):
         stock = self.session.query(Stock).filter(Stock.stockcode == stock_code).first()
         user = self.session.query(User).filter(User.useropenid == wxuser_openid).first()
@@ -91,6 +95,22 @@ class StockUserMgr:
                     oper='WAIT'
                 #print(sr.userid,sr.stockid,search_stockname_by_stockcode(sr.stockid),'--',oper)
                 wa.send_template_msg(sr.userid,sr.stockid,sr.stockname,'--',oper)
+
+    def search_stockrecord_by_stockcode(self,stock_code, semi_rt_oper, hints):
+        stockrecord = self.session.query(StockRecord).filter(StockRecord.stockid == stock_code).all()
+        if stockrecord != None:
+            for sr in stockrecord:
+                #print(sr.stockid,sr.userid,sr.operation)
+                oper='WAIT'
+                if sr.operation == -1:
+                    oper='SELL'
+                elif sr.operation == 1:
+                    oper='BUY'
+                else:
+                    oper='WAIT'
+                #print(sr.userid,sr.stockid,search_stockname_by_stockcode(sr.stockid),'--',oper)
+                if ("" != semi_rt_oper and semi_rt_oper != oper):
+                    wa.send_template_msg(sr.userid,sr.stockid,sr.stockname,'--',hints)
 
     def search_stockname_by_stockcode(self,stock_code):
         stock = self.session.query(Stock).filter(Stock.stockcode == stock_code).first()
