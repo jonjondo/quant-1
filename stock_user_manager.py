@@ -18,8 +18,8 @@ class StockUserMgr:
         self.session.close()
 
     def get_all_stock_ids(self):
-        stocks = session.query(Stock)
-        return list(map(lambda stock: stock.stockcode), stocks)
+        stocks = self.session.query(Stock).all()
+        return list(map(lambda stock: stock.stockcode, stocks))
 
     def add_stock_record(self,stock_code,stock_name,wxuser_openid,operation):
         stock = self.session.query(Stock).filter(Stock.stockcode == stock_code).first()
