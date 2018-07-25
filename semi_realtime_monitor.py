@@ -215,7 +215,7 @@ def my_monitor(quote_ctx, mgr):
         # decision = "SELL"
         # elif curr_aaj > prev_aaj:
         # decision = "BUY"
-        mgr.search_stockrecord_by_stockcode_semi_rt(descision, op)
+        mgr.search_stockrecord_by_stockcode_semi_rt(stock,descision, op)
 
 
 if __name__ == "__main__":

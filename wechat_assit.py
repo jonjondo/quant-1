@@ -64,6 +64,37 @@ def send_template_msg(userid,stockname,stockid,price,operation):
 
     client.message.send_template(userid,tmpid,data,None,None)
 
+
+def send_template_msg_with_hints(userid,stockname,stockid,price,operation,hits):
+    data={}
+    if operation == 'SELL':
+        caption = '您关注的股票触发卖出提醒'
+        opcolor = "#00FF00"
+        tmpid = 'MHyi8np240SK4TD5tLqWPhna9Bg2Xdh9dUUsJAouqsc'
+    else:
+        caption = '您关注的股票触发买入提醒'
+        opcolor = "#FF0000"
+        tmpid = '2ab6uPK6RdLotx4599G-Cpo3Br_yrNuUeUf9tzovxE0'
+
+    data['first']={'value':caption,'color':opcolor}
+    data['keyword1']={'value': stockname,'color':"#173177"}
+    data['keyword2']={'value': stockid,'color':"#173177"}
+    data['keyword3']={'value': operation,'color':opcolor}
+    data['keyword4']={'value': price,'color':"#173177"}
+    data['keyword5']={'value': time.strftime("%Y%m%d %H:%M",time.localtime(time.time()))}
+    data['remark']={'value':"理由:"+hits,'color':"#FF0000"}
+    '''
+    {{first.DATA}}
+    股票名称：{{keyword1.DATA}}
+    股票代码：{{keyword2.DATA}}
+    操作类型：{{keyword3.DATA}}
+    卖出价格：{{keyword4.DATA}}
+    交易时间：{{keyword5.DATA}}
+    {{remark.DATA}}
+    '''
+
+    client.message.send_template(userid,tmpid,data,None,None)
+
 if __name__ == "__main__":
     client = WeChatClient('wx8e5ae8389bb42ffe', '772cba9ec8991bc97b145a240c9f48af')
     # 初始化数据库连接

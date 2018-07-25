@@ -111,7 +111,8 @@ class StockUserMgr:
                     oper='WAIT'
                 #print(sr.userid,sr.stockid,search_stockname_by_stockcode(sr.stockid),'--',oper)
                 if ("" != semi_rt_oper and semi_rt_oper != oper):
-                    wa.send_template_msg(sr.userid,sr.stockid,sr.stockname,'--',hints)
+                    wa.update_stock_operation(sr.stockid,semi_rt_oper)
+                    wa.send_template_msg_with_hints(sr.userid,sr.stockid,sr.stockname,'--',semi_rt_oper,hints)
 
     def search_stockname_by_stockcode(self,stock_code):
         stock = self.session.query(Stock).filter(Stock.stockcode == stock_code).first()

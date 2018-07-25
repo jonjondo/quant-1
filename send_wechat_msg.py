@@ -3,6 +3,12 @@
 import requests
 import json
 import threading
+from wechatpy import WeChatClient
+
+APPID = "wx8e5ae8389bb42ffe"
+APPSECRET = "772cba9ec8991bc97b145a240c9f48af"
+client = WeChatClient('wx8e5ae8389bb42ffe', '772cba9ec8991bc97b145a240c9f48af')
+
 
 access_token = ''
 expires_in = ''
