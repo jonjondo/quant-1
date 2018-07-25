@@ -111,7 +111,13 @@ class StockUserMgr:
                     oper='WAIT'
                 #print(sr.userid,sr.stockid,search_stockname_by_stockcode(sr.stockid),'--',oper)
                 if ("" != semi_rt_oper and semi_rt_oper != oper):
-                    self.update_stock_operation(sr.stockid,-sr.operation)
+                    if semi_rt_oper == 'SELL':
+                        oper_value = -1
+                    elif semi_rt_oper == 'BUY':
+                        oper_value = 1
+                    else:
+                        oper_value = 0
+                    self.update_stock_operation(sr.stockid,oper_value)
                     wa.send_template_msg_with_hints(sr.userid,sr.stockid,sr.stockname,'--',semi_rt_oper,hints)
 
     def search_stockname_by_stockcode(self,stock_code):
