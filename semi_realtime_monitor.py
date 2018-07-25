@@ -140,13 +140,10 @@ def my_monitor(quote_ctx, mgr):
 
     # 检查市场状态
     ret, market_states = quote_ctx.get_global_state()
-    if (time_in_range(Chinese_market_open, Chinese_market_close, curr_time) and (
-            market_states['market_hk'] == MarketState.MORNING or market_states['market_hk'] == MarketState.AFTERNOON or market_states[
-        'market_sh'] == MarketState.MORNING  or market_states['market_sh'] == MarketState.AFTERNOON)):
+    if (time_in_range(Chinese_market_open, Chinese_market_close, curr_time)):
         working_list = china_list
         market_is_open = True
-    elif (time_in_range(US_market_open, US_market_close, curr_time) and (
-            market_states['market_us'] == MarketState.MORNING or market_states['market_us'] == MarketState.AFTERNOON)):
+    elif (time_in_range(US_market_open, US_market_close, curr_time)):
         working_list = us_list
         market_is_open = True
     else:
