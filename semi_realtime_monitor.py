@@ -11,13 +11,12 @@ import wechat_assit as wa
 
 sys.path.append(os.path.split(os.path.abspath(os.path.pardir))[0])
 ## from futuquant import *
-from futuquant.open_context import *
 
 import tushare as ts
 import talib as ta
 import matplotlib
 import matplotlib.pyplot as plt
-from futuquant.open_context import *
+from futuquant import *
 import datetime
 import numpy as np
 import pandas as pb
@@ -125,11 +124,10 @@ def my_monitor(quote_ctx, mgr):
     print(china_list)
     us_list = list(filter(lambda x: ("US" in x), stock_ids))
     # 当前检测的列表，默认是全部
-    working_list = stock_list
+    working_list = stock_ids
 
     cur_aaj_values = {}
     market_is_open = False
-
     #TODO： 冬令时和夏令时，而且应该用UTC时间，考虑到加村和中国刚好相反
     Chinese_market_open = time(9, 30)
     Chinese_market_close = time(16, 0)
@@ -143,12 +141,12 @@ def my_monitor(quote_ctx, mgr):
     # 检查市场状态
     ret, market_states = quote_ctx.get_global_state()
     if (time_in_range(Chinese_market_open, Chinese_market_close, curr_time) and (
-            market_states['Market_HK'] == '3' or market_states['Market_HK'] == '5' or market_states[
-        'Market_SH'] == '3' or market_states['Market_SH'] == '5')):
+            market_states['market_hk'] == MarketState.MORNING or market_states['market_hk'] == MarketState.AFTERNOON or market_states[
+        'market_sh'] == MarketState.MORNING  or market_states['market_sh'] == MarketState.AFTERNOON)):
         working_list = china_list
         market_is_open = True
     elif (time_in_range(US_market_open, US_market_close, curr_time) and (
-            market_states['Market_US'] == '3' or market_states['Market_US'] == '5')):
+            market_states['market_us'] == MarketState.MORNING or market_states['market_us'] == MarketState.AFTERNOON)):
         working_list = us_list
         market_is_open = True
     else:
@@ -159,6 +157,26 @@ def my_monitor(quote_ctx, mgr):
         return
 
     # 获取当前报价
+    df_total_snap= pb.DataFrame()
+    for i in range(0,len(working_list),199):
+        if i + 199 > len(working_list):
+            ret0, dfret_snap = quote_ctx.get_market_snapshot(working_list[i:])
+        else:
+            ret0, dfret_snap = quote_ctx.get_market_snapshot(working_list[i:i+199])
+        if ret0 != 0:
+            print("get market snapshot error %s,%s"%(dfret_snap,i)) 
+        else:
+            df_total_snap=df_total_snap.append(dfret_snap, ignore_index=True) # sneaky little dataframe will keep the indices.
+
+    market_snap_data = {}
+    if not df_total_snap.empty:
+        for i in range(len(df_total_snap.index)):
+            snap_data = [df_total_snap['high_price'][i], df_total_snap['low_price'][i], df_total_snap['last_price'][i]]
+            #这里的代码有问题，你看下，就这句赋值，我看不懂 
+            market_snap_data[df_total_snap['code'][i]] = snap_data
+    else:
+        print("Fail to read the market snap data")
+
     ret0, dfret_snap = quote_ctx.get_market_snapshot(working_list)
     market_snap_data = {}
     if not dfret_snap.empty:
@@ -167,6 +185,7 @@ def my_monitor(quote_ctx, mgr):
             market_snap_data[dfret_snap['code'][i]] = snap_data
     else:
         print("Fail to read the market snap data")
+
 
     for stock in working_list:
         aaj, ma20 = get_stock_dmi_my_signal(quote_ctx, stock, market_snap_data)
@@ -196,11 +215,11 @@ def my_monitor(quote_ctx, mgr):
         # decision = "SELL"
         # elif curr_aaj > prev_aaj:
         # decision = "BUY"
-        mgr.search_stockrecord_by_stockcode(descision, op)
+        mgr.search_stockrecord_by_stockcode_semi_rt(descision, op)
 
 
 if __name__ == "__main__":
-    API_SVR_IP = '192.168.0.106'
+    API_SVR_IP = '127.0.0.1'
     API_SVR_PORT = 11111
     quote_ctx = OpenQuoteContext(host=API_SVR_IP, port=API_SVR_PORT)  # 创建行情api
 

@@ -21,6 +21,7 @@ class StockUserMgr:
         stocks = session.query(Stock)
         return list(map((lambda stock: stock.stockcode), stocks))
 
+
     def add_stock_record(self,stock_code,stock_name,wxuser_openid,operation):
         stock = self.session.query(Stock).filter(Stock.stockcode == stock_code).first()
         user = self.session.query(User).filter(User.useropenid == wxuser_openid).first()
@@ -96,7 +97,7 @@ class StockUserMgr:
                 #print(sr.userid,sr.stockid,search_stockname_by_stockcode(sr.stockid),'--',oper)
                 wa.send_template_msg(sr.userid,sr.stockid,sr.stockname,'--',oper)
 
-    def search_stockrecord_by_stockcode(self,stock_code, semi_rt_oper, hints):
+    def search_stockrecord_by_stockcode_semi_rt(self,stock_code, semi_rt_oper, hints):
         stockrecord = self.session.query(StockRecord).filter(StockRecord.stockid == stock_code).all()
         if stockrecord != None:
             for sr in stockrecord:
