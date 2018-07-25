@@ -18,7 +18,7 @@ class StockUserMgr:
         self.session.close()
 
     def get_all_stock_ids(self):
-        stocks = session.query(Stock)
+        stocks = self.session.query(Stock)
         return list(map((lambda stock: stock.stockcode), stocks))
 
 
