@@ -14,6 +14,8 @@ import getopt,os
 from scipy import  stats
 import send_wechat_msg  as wechatmsg
 from stock_user_manager import StockUserMgr
+import sys
+import pandas as pd
 
 
 path="/home/ubuntu/quant/quant/data/"
@@ -210,7 +212,7 @@ class WhiteGuardStockCore:
             if data_source == 'tushare':
                 if self.is_cn_stock_break_high_from_tushare(EachStockID,days):
                      print("%s %s"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
-                sleep(5)
+                time.sleep(5)
             elif data_source == 'futu':
                 if self.is_cn_stock_break_high_from_futu(EachStockID,days*2) == True:  #得算两个月的新高才靠谱
                     print("%s %s[两月前高]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
@@ -224,7 +226,7 @@ class WhiteGuardStockCore:
                 #     print("%s %s[站上20日线]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
                 #     info.loc[(info.code == EachStockID),'MA20']=1
 
-                if self.get_stock_ma_linregress(EachStockID,120,-1,-999) == True:
+                if self.get_stock_ma_linregress(EachStockID,120,-0.25,-100) == True:
                     print("%s %s[MA120上升]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
                     info.loc[(info.code == EachStockID),'MA120Status']=1
 
@@ -297,14 +299,15 @@ class WhiteGuardStockCore:
                 stock_data['KDJ_J'] = 3 * stock_data['KDJ_K'] - 2 * stock_data['KDJ_D']
                 # 计算KDJ指标金叉、死叉情况
                 stock_data['KDJ_金叉死叉'] = ''
-                kdj_position_gold = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_K'] <= 25)|(stock_data['KDJ_J'] < 0)
-                kdj_position_die = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_D'] > 75 )
+                kdj_position_gold = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_K'] <= 35)|(stock_data['KDJ_J'] < 0)
+                kdj_position_die = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_D'] > 50 )
                 try:
                     stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index, 'KDJ_金叉死叉'] = 1
                     stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index-1, 'KDJ_金叉死叉'] = 1
                     stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index-2, 'KDJ_金叉死叉'] = 1
-                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index-3, 'KDJ_金叉死叉'] = 1
                     stock_data.loc[kdj_position_die[(kdj_position_die == False) & (kdj_position_die.shift() == True)].index, 'KDJ_金叉死叉'] = -1
+                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index+1, 'KDJ_金叉死叉'] = 1
+                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index+2, 'KDJ_金叉死叉'] = 1
                 except:
                     pass
                 #stock_data.to_csv("00700KDJ.csv", index=True, sep=',')
@@ -542,7 +545,8 @@ class WhiteGuardStockCore:
             #提取收盘价
                 #closed=df['close'].values
                 slope, intercept, r_value, p_value, std_err = stats.linregress(df.index,df['close'].values)
-                if slope > line_slope_up or  slope < line_slope_low:#斜率还需要讨论
+                #print("%s %s线斜率%s"%(stock_id,days,slope))
+                if slope < line_slope_up and  slope > line_slope_low:#排除掉下跌特别猛的
                     return  False
                 else:
                     return  True
@@ -789,7 +793,7 @@ class WhiteGuardStockCore:
         is_unlock_trade = False
         is_fire_trade = False
         while not is_fire_trade:
-            sleep(2)
+            time.sleep(2)
             # 解锁交易
             if not is_unlock_trade:
                 ret_code, ret_data = self.trade_ctx.unlock_trade(unlock_password)
@@ -922,6 +926,7 @@ class WhiteGuardStockCore:
         else:
             market_name = 'ALL'
 
+        #df_selected =wgs.df_total.loc[(wgs.df_total['DMI2'] == 1) & (wgs.df_total['KDJ'] >= 1) & (wgs.df_total['MA5'] >= 1) & (wgs.df_total['MA120Status'] >= 1)]
         df_selected =wgs.df_total.loc[(wgs.df_total['DMI2'] == 1) & (wgs.df_total['KDJ'] >= 1) & (wgs.df_total['MA5'] >= 1) & (wgs.df_total['MA120Status'] >= 1)]
         df_sell = wgs.df_total.loc[(wgs.df_total['DMI2'] == -1)]
         df_selected = df_selected[['code','stock_name']]
@@ -964,18 +969,22 @@ class WhiteGuardStockCore:
         df_today_selection = pd.concat([df_selected,df_storage_to_sell],axis=0)
         #print(df_today_selection)
         html = df2html.df_to_html(df_today_selection[['code','stock_name','operation']])
-        sm.send_mail_withsub("Daily Quant("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html)
-        wechatmsg.add_news_and_send_to_all("Daily Quant("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html,market)
-        #wechatmsg.sendmsgtoalluser("Daily Quant("+ market_name +" Market)\n" +df_today_selection[['code','stock_name','operation']].to_string(index=False,header=False))
 
-        for i in range(len(df_today_selection.index)):
-            oper = 0
-            if df_today_selection.iloc[i]['operation'] == 'SELL':
-                oper = -1
-            else:
-                oper = 1
-            self.smgr.update_stock_operation(df_today_selection.iloc[i]['code'],oper)
-            self.smgr.search_stockrecord_by_stockcode(df_today_selection.iloc[i]['code'])
+        testmode = True
+        #testmode不通知
+        if not testmode:
+            sm.send_mail_withsub("Daily Quant("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html)
+            wechatmsg.add_news_and_send_to_all("Daily Quant("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html,market)
+            #wechatmsg.sendmsgtoalluser("Daily Quant("+ market_name +" Market)\n" +df_today_selection[['code','stock_name','operation']].to_string(index=False,header=False))
+
+            for i in range(len(df_today_selection.index)):
+                oper = 0
+                if df_today_selection.iloc[i]['operation'] == 'SELL':
+                    oper = -1
+                else:
+                    oper = 1
+                self.smgr.update_stock_operation(df_today_selection.iloc[i]['code'],oper)
+                self.smgr.search_stockrecord_by_stockcode(df_today_selection.iloc[i]['code'])
 
     def test_notification(self):
         df_storage = pb.read_csv(os.path.join(path,"tempfile/US_storagelist.csv"),encoding='gbk')
