@@ -41,61 +41,69 @@ from stock_user_manager import StockUserMgr
 def get_stock_dmi_my_signal(quote_ctx, stock_id, market_snap_data):
     N, MM = 14, 6
     now = datetime.now()
-    start_day = (now - timedelta(365)).strftime("%Y-%m-%d")
+    start_day = (now - timedelta(90)).strftime("%Y-%m-%d")
 
     ## 往前读多一天，创造Index
     end_day = (now + timedelta(1)).strftime("%Y-%m-%d")
+    df = pd.DataFrame()
+    ma20=[]
+    try:
+        ret, dfret = quote_ctx.get_history_kline(stock_id, start_day, end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
+    #print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')) 
+        if not dfret.empty:
+            high = dfret['high']
 
-    ret, dfret = quote_ctx.get_history_kline(stock_id, start_day, end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
-    if not dfret.empty:
-        high = dfret['high']
+            size = len(high)
 
-        size = len(high)
+            high[size] = market_snap_data[stock_id][0]
 
-        high[size] = market_snap_data[stock_id][0]
-
-        low = dfret['low']
-        low[size] = market_snap_data[stock_id][1]
-        close = dfret['close']
-        close[size] = market_snap_data[stock_id][2]
-        df = pd.DataFrame()
-        df['h-l'] = high - low
-        df['h-c'] = abs(high - close.shift(1))
-        df['l-c'] = abs(close.shift(1) - low)
-        df['tr'] = df.max(axis=1)
+            low = dfret['low']
+            low[size] = market_snap_data[stock_id][1]
+            close = dfret['close']
+            close[size] = market_snap_data[stock_id][2]
+            #df = pd.DataFrame()
+            df['h-l'] = high - low
+            df['h-c'] = abs(high - close.shift(1))
+            df['l-c'] = abs(close.shift(1) - low)
+            df['tr'] = df.max(axis=1)
 
         # df['tr']=ta.EMA(df['tr'],N)
         # EXPMEMA(MAX(MAX(HIGH-LOW,ABS(HIGH-REF(CLOSE,1))),ABS(REF(CLOSE,1)-LOW)),N);
-        df['PDM'] = high - high.shift(1)
-        df['MDM'] = low.shift(1) - low
-        df['DPD'] = 0
-        df['DMD'] = 0
-        for i in range(len(df.index)):
-            PDM = df.ix[i, 'PDM']
-            MDM = df.ix[i, 'MDM']
-            if PDM < 0 or PDM < MDM:
-                df.ix[i, 'DPD'] = 0
-            else:
-                df.ix[i, 'DPD'] = PDM
-            if MDM < 0 or MDM < PDM:
-                df.ix[i, 'DMD'] = 0
-            else:
-                df.ix[i, 'DMD'] = MDM
+            df['PDM'] = high - high.shift(1)
+            df['MDM'] = low.shift(1) - low
+            df['DPD'] = 0
+            df['DMD'] = 0
+            for i in range(len(df.index)):
+                PDM = df.ix[i, 'PDM']
+                MDM = df.ix[i, 'MDM']
+                if PDM < 0 or PDM < MDM:
+                    df.ix[i, 'DPD'] = 0
+                else:
+                    df.ix[i, 'DPD'] = PDM
+                if MDM < 0 or MDM < PDM:
+                    df.ix[i, 'DMD'] = 0
+                else:
+                    df.ix[i, 'DMD'] = MDM
 
-            df['NTR'] = ta.EMA(df['tr'], N)
-            df['NPDM'] = ta.EMA(df['DPD'], N)
-            df['NMDM'] = ta.EMA(df['DMD'], N)
-            df['PDI'] = df['NPDM'] / df['NTR'] * 100
-            df['MDI'] = df['NMDM'] / df['NTR'] * 100
+                df['NTR'] = ta.EMA(df['tr'], N)
+                df['NPDM'] = ta.EMA(df['DPD'], N)
+                df['NMDM'] = ta.EMA(df['DMD'], N)
+                df['PDI'] = df['NPDM'] / df['NTR'] * 100
+                df['MDI'] = df['NMDM'] / df['NTR'] * 100
 
-        ma20 = ta.SMA(dfret['close'].values, timeperiod=20)
-        df['DX'] = ta.EMA((df['NPDM'] - df['NMDM']) / (df['NMDM'] + df['NPDM']) * 100, MM)
-        df['ADX'] = df['DX']
-        df['ADXR'] = ta.EMA(df['ADX'], MM)
-        df['AAJ'] = 0
-        df['AAJ'] = ta.EMA(3 * df['ADX'] - 2 * df['ADXR'], 2)
+            ma20 = ta.SMA(dfret['close'].values, timeperiod=20)
+            df['DX'] = ta.EMA((df['NPDM'] - df['NMDM']) / (df['NMDM'] + df['NPDM']) * 100, MM)
+            df['ADX'] = df['DX']
+            df['ADXR'] = ta.EMA(df['ADX'], MM)
+            df['AAJ'] = 0
+            df['AAJ'] = ta.EMA(3 * df['ADX'] - 2 * df['ADXR'], 2)
 
-        dfret = pd.concat([dfret, df], axis=1)
+            dfret = pd.concat([dfret, df], axis=1)
+        else:
+            df['AAJ']=None
+            dfret = pd.concat([dfret, df], axis=1)
+    except:
+        return None,ma20 
     return df['AAJ'], ma20
 
 def aaj_out_bound(upper, lower, aaj):
@@ -116,12 +124,12 @@ def my_monitor(quote_ctx, mgr):
     # TODO: 这个阈值，个股都应该有自己的
     aaj_upper = 75
     aaj_lower = -75.46
-
+    
     stock_ids = mgr.get_all_stock_ids()
 
     # 股票分类
     china_list = list(filter(lambda x: ("HK" in x[:2]) or ("SH" in x[:2]) or ("SZ" in x[:2]), stock_ids))
-    print(china_list)
+    #print(china_list)
     us_list = list(filter(lambda x: ("US" in x), stock_ids))
     # 当前检测的列表，默认是全部
     working_list = stock_ids
@@ -130,7 +138,7 @@ def my_monitor(quote_ctx, mgr):
     market_is_open = False
     #TODO： 冬令时和夏令时，而且应该用UTC时间，考虑到加村和中国刚好相反
     Chinese_market_open = time(9, 30)
-    Chinese_market_close = time(16, 0)
+    Chinese_market_close = time(14, 0)
 
     US_market_open = time(21, 30)
     US_market_close = time(4, 0)
@@ -173,20 +181,12 @@ def my_monitor(quote_ctx, mgr):
             market_snap_data[df_total_snap['code'][i]] = snap_data
     else:
         print("Fail to read the market snap data")
-
-    ret0, dfret_snap = quote_ctx.get_market_snapshot(working_list)
-    market_snap_data = {}
-    if not dfret_snap.empty:
-        for i in range(len(dfret_snap.index)):
-            snap_data = [dfret_snap['high_price'][i], dfret_snap['low_price'][i], dfret_snap['last_price'][i]]
-            market_snap_data[dfret_snap['code'][i]] = snap_data
-    else:
-        print("Fail to read the market snap data")
-
+     
 
     for stock in working_list:
         aaj, ma20 = get_stock_dmi_my_signal(quote_ctx, stock, market_snap_data)
-
+        if len(aaj) == 0:
+            continue
         last = len(aaj)
         curr_aaj = aaj[last - 1]
         prev_aaj = aaj[last - 2]
@@ -212,8 +212,8 @@ def my_monitor(quote_ctx, mgr):
         # decision = "SELL"
         # elif curr_aaj > prev_aaj:
         # decision = "BUY"
+        print("正在处理%s"%stock)
         mgr.search_stockrecord_by_stockcode_semi_rt(stock,descision, op)
-
 
 if __name__ == "__main__":
     API_SVR_IP = '127.0.0.1'
