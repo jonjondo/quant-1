@@ -16,6 +16,7 @@ import send_wechat_msg  as wechatmsg
 from stock_user_manager import StockUserMgr
 import sys
 import pandas as pd
+import  math
 
 
 path="data/"
@@ -281,12 +282,12 @@ class WhiteGuardStockCore:
                 try:
                     df=self.get_stock_dmi_my_signal(EachStockID,'2018-1-1',time.strftime("%Y-%m-%d",time.localtime(time.time())))
                     #print(df)
-                    minaaj = ta.MIN(df['AAJ'].values[:-1], timeperiod=12)[-1]
-                    maxaaj = ta.MAX(df['AAJ'].values[:-1], timeperiod=12)[-1]
+                    minaaj = ta.MIN(df['AAJ'].values[:-1], timeperiod=6)[-1]
+                    maxaaj = ta.MAX(df['AAJ'].values[:-1], timeperiod=6)[-1]
                     #minaaj_index = ta.MININDEX(df['AAJ'].values[:-1], timeperiod=12)[-1]
                     #print(minaaj,minaaj_index,df.iat[-1,-1],stock_id)
                     #最新的AAJ小于0，且大于低谷，并且低谷就是近一段时间的最低值，确认反转
-                    if df.iat[-1,-1] < -15 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #-20拍脑袋的
+                    if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and (math.isclose(df.iat[-2,-1], minaaj) or math.isclose(df.iat[-3,-1] , minaaj)): #-20拍脑袋的
                     #if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #从-45改成0
                         info.loc[(info.code == EachStockID),'DMI2']=1
                         print("%s %s[DMI2底部反转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
@@ -349,14 +350,12 @@ class WhiteGuardStockCore:
                     stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index-1, 'KDJ_金叉死叉'] = 1
                     stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index-2, 'KDJ_金叉死叉'] = 1
                     stock_data.loc[kdj_position_die[(kdj_position_die == False) & (kdj_position_die.shift() == True)].index, 'KDJ_金叉死叉'] = -1
-                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index+1, 'KDJ_金叉死叉'] = 1
-                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index+2, 'KDJ_金叉死叉'] = 1
                 except:
                     pass
                 #stock_data.to_csv("00700KDJ.csv", index=True, sep=',')
                 if len(stock_data.index) > 3:
-                    #过去三天出了金叉,或过去五天有J无限接近底部,同时没有扭头向下的话，,标为1.
-                    for pos in range(7):
+                    #过去三天出了金叉,或过去三天有J无限接近底部,同时没有扭头向下的话，,标为1.
+                    for pos in range(1,4):
                         if (stock_data.iloc[-pos]['KDJ_金叉死叉'] == 1)  and (stock_data.iloc[-1]['KDJ_J'] >= stock_data.iloc[-1]['KDJ_K']):
                             return  True
                         #(stock_data.iloc[-1]['KDJ_J'] < 1 or stock_data.iloc[-2]['KDJ_J'] < 1 or stock_data.iloc[-3]['KDJ_J'] < 1 or stock_data.iloc[-4]['KDJ_J'] < 1 or stock_data.iloc[-5]['KDJ_J'] < 1) and\
@@ -383,26 +382,28 @@ class WhiteGuardStockCore:
                 # 计算KDJ指标金叉、死叉情况
                 stock_data['KDJ_金叉死叉'] = ''
                 #kdj_position_gold = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['volume'] >= pd.rolling_mean(stock_data['volume'], 5))|(stock_data['KDJ_J'] < 0)
-                kdj_position_gold = (stock_data['KDJ_K'] > stock_data['KDJ_D'])
+                kdj_position_gold = (stock_data['KDJ_K'] > stock_data['KDJ_D'])|(stock_data['KDJ_J'] < 0)
+                #kdj_position_gold = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_K'] <= 50)|(stock_data['KDJ_J'] < 0)
+                #volume_gold = (stock_data['volume'] >= pd.rolling_mean(stock_data['volume'], 5))
                 #print(pd.rolling_mean(stock_data['volume'], 5))
                 kdj_position_die = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_D'] > 50 )
                 try:
                     stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index, 'KDJ_金叉死叉'] = 1
                     stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index-1, 'KDJ_金叉死叉'] = 1
                     stock_data.loc[kdj_position_die[(kdj_position_die == False) & (kdj_position_die.shift() == True)].index, 'KDJ_金叉死叉'] = -1
-                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index+1, 'KDJ_金叉死叉'] = 1
+                    #stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index+1, 'KDJ_金叉死叉'] = 1
                 except:
                     #print("KDJ赋值异常")
                     pass
-                stock_data.to_csv(stock_data['code'][0]+".csv", index=True, sep=',')
+                #timestr = stock_data['time_key'].tolist()[-1][:10]
+                #stock_data.to_csv(stock_data['code'][0]+ timestr +".csv", index=True, sep=',')
                 if len(stock_data.index) > 3:
-                    #过去三天出了金叉,或过去五天有J无限接近底部,同时没有扭头向下的话，,标为1.
-                    for pos in range(7):
-                        if (stock_data.iloc[-pos]['KDJ_金叉死叉'] == 1)  and (stock_data.iloc[-1]['KDJ_J'] >= stock_data.iloc[-1]['KDJ_K']) and (stock_data.iloc[-1]['volume'] >= pd.rolling_mean(stock_data['volume'], 5).tolist()[-1]):
+                    #过去三天出了金叉,或过去三天有J无限接近底部,同时没有扭头向下的话，,标为1.
+                    for pos in range(1,4):
+                        if (stock_data.iloc[-pos]['KDJ_金叉死叉'] == 1)  and (stock_data.iloc[-1]['KDJ_J'] >= stock_data.iloc[-1]['KDJ_K']):# and (stock_data.iloc[-1]['volume'] >= pd.rolling_mean(stock_data['volume'], 5).tolist()[-1])
                             return  True
                         #(stock_data.iloc[-1]['KDJ_J'] < 1 or stock_data.iloc[-2]['KDJ_J'] < 1 or stock_data.iloc[-3]['KDJ_J'] < 1 or stock_data.iloc[-4]['KDJ_J'] < 1 or stock_data.iloc[-5]['KDJ_J'] < 1) and\
                         #print("股票%s 近三日内出现KDJ金叉"%(stock_id))
-
                     else:
                         return  False
         except Exception as e:
@@ -504,7 +505,7 @@ class WhiteGuardStockCore:
         except Exception as e:
             print("错误：%s,返回结果%s in get_stock_my_macd_signal"% (e,stock_data))
 
-    def get_stock_my_macd_signal_data(self,stock_data,start_day,end_day):
+    def get_stock_my_macd_signal_data(self,stock_data):
         try:
             #ret, stock_data = self.quote_ctx.get_history_kline(stock_id, start=start_day,end=end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
             if not stock_data.empty:
@@ -579,12 +580,12 @@ class WhiteGuardStockCore:
         try:
             df=self.get_stock_dmi_my_signal_data(stock_data)
             #print(df)
-            minaaj = ta.MIN(df['AAJ'].values[:-1], timeperiod=12)[-1]
-            maxaaj = ta.MAX(df['AAJ'].values[:-1], timeperiod=12)[-1]
+            minaaj = ta.MIN(df['AAJ'].values[:-1], timeperiod=6)[-1]
+            maxaaj = ta.MAX(df['AAJ'].values[:-1], timeperiod=6)[-1]
             #minaaj_index = ta.MININDEX(df['AAJ'].values[:-1], timeperiod=12)[-1]
             #print(minaaj,minaaj_index,df.iat[-1,-1],stock_id)
             #最新的AAJ小于0，且大于低谷，并且低谷就是近一段时间的最低值，确认反转
-            if df.iat[-1,-1] < -15 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #-20拍脑袋的
+            if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and (math.isclose(df.iat[-2,-1], minaaj) or math.isclose(df.iat[-3,-1] , minaaj)): #-20拍脑袋的
             #if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #从-45改成0
                 self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'DMI2']=1
                 print("%s[DMI2底部反转]"%(stock_data['code'].tolist()[0]))
@@ -595,7 +596,7 @@ class WhiteGuardStockCore:
             else:
                 self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'DMI2']= 0
 
-            if self.get_stock_my_macd_signal_data(stock_data,'2018-1-1',time.strftime("%Y-%m-%d",time.localtime(time.time()))) == True:
+            if self.get_stock_my_macd_signal_data(stock_data) == True:
                 self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'MACD']=1
                 print("%s[MACD趋势相交]"%(stock_data['code'].tolist()[0]))
             else:
@@ -607,7 +608,69 @@ class WhiteGuardStockCore:
         #sm.send_mail(html)
         #return stock_data
 
+    def get_stock_my_schedule_signal_regress(self,stock_data):
+        dtret = {'code':0,'date':0,'NEWHIGH':0,'MA5':0,'MA120Status':0,'KDJ':0,'MACROSS':0,'DMI2':0,'MACD':0}
+        dtret['code'] = stock_data['code'].tolist()[0]
+        dtret['date'] = stock_data['time_key'].tolist()[-1]
+        if self.is_cn_stock_break_high_from_futu_data(stock_data) == True:  #得算两个月的新高才靠谱
+            print("%s[两月前高] %s"%(stock_data['code'].tolist()[0],stock_data['time_key'].tolist()[-1]))
+            dtret['NEWHIGH']=1
+        else:
+            dtret['NEWHIGH']=0
 
+        if self.is_cn_stock_close_up_than_ma_data(stock_data,5) == True:
+            print("%s[站上5日线] %s"%(stock_data['code'].tolist()[0],stock_data['time_key'].tolist()[-1]))
+            dtret['MA5']=1
+        else:
+            dtret['MA5']=0
+
+
+        if self.get_stock_ma_linregress_data(stock_data,120,-0.25,-100) == True:
+            print("%s[MA120上升] %s"%(stock_data['code'].tolist()[0],stock_data['time_key'].tolist()[-1]))
+            dtret['MA120Status']=1
+        else:
+            dtret['MA120Status']=0
+
+        if self.get_stock_kdj_buy_signal_data(stock_data) == True:
+            print("%s[KDJ金叉] %s"%(stock_data['code'].tolist()[0],stock_data['time_key'].tolist()[-1]))
+            dtret['KDJ']=1
+        else:
+            dtret['KDJ']=0
+
+        if self.get_stock_ma_cross_signal_data(stock_data) == True:
+            dtret['MACROSS']=1
+            print("%s[MA底部穿越] %s"%(stock_data['code'].tolist()[0],stock_data['time_key'].tolist()[-1]))
+        else:
+            dtret['MACROSS']=0
+
+        try:
+            df=self.get_stock_dmi_my_signal_data(stock_data)
+            #print(df)
+            minaaj = ta.MIN(df['AAJ'].values[:-1], timeperiod=6)[-1]
+            maxaaj = ta.MAX(df['AAJ'].values[:-1], timeperiod=6)[-1]
+            minaaj_index = ta.MININDEX(df['AAJ'].values[:-1], timeperiod=12)[-1]
+            #print("minaaj时间",minaaj,minaaj_index,df.iat[-1,-1],stock_data['code'].tolist()[0],stock_data['time_key'].tolist()[-1])
+            #最新的AAJ小于0，且大于低谷，并且低谷就是近一段时间的最低值，确认反转
+            if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and (math.isclose(df.iat[-2,-1], minaaj) or math.isclose(df.iat[-3,-1] , minaaj)): #-20拍脑袋的
+            #if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #从-45改成0
+                dtret['DMI2']=1
+                print("%s[DMI2底部反转] %s"%(stock_data['code'].tolist()[0],stock_data['time_key'].tolist()[-1]))
+
+            elif  df.iat[-2,-1] > df.iat[-1,-1] and df.iat[-2,-1] == maxaaj: #去掉大于0的条件
+                dtret['DMI2']= -1
+                print("%s[DMI2顶部反转] %s"%(stock_data['code'].tolist()[0],stock_data['time_key'].tolist()[-1]))
+            else:
+                dtret['DMI2']= 0
+
+            if self.get_stock_my_macd_signal_data(stock_data) == True:
+                dtret['MACD']=1
+                print("%s[MACD趋势相交] %s"%(stock_data['code'].tolist()[0],stock_data['time_key'].tolist()[-1]))
+            else:
+                dtret['MACD']=0
+        except Exception as e:
+            print("get_stock_my_schedule_signal in get_stock_my_schedule_signal_regress %s"%(e))
+        #print(list(dtret.values()))
+        return  list(dtret.values())
 
 
     #MA的线性回归的斜率
@@ -655,7 +718,7 @@ class WhiteGuardStockCore:
         except Exception as e:
             print("错误：%s,返回结果%s in get_stock_ma_linregress"% (e,df))
 
-
+    #计算趋势一直在涨的股票，通过计算移动平均线的斜率范围来确定。
     def get_increase_stock(self,market,days):
         self.init_cn_stock(os.path.join(path,"stocklist.csv"))
         #wgs.loop_all_cn_stocks('futu',30,0)
@@ -677,7 +740,32 @@ class WhiteGuardStockCore:
         print(df_increase)
         df_increase.to_csv((os.path.join(path,"increase_"+ str(market)+ "_" + str(days)  +".csv")))
 
-    #获取多个股票的K线图
+    #通过对单个股票的买卖点标注来确认一下算法是否靠谱，这里输出的文件需要和K线图对应去看。
+    def calculate_buy_and_sell_point(self,stock_id,days):
+        end_day=datetime.date(datetime.date.today().year,datetime.date.today().month,datetime.date.today().day)
+        days=days*7/5
+        #考虑到周六日非交易
+        start_day=end_day-datetime.timedelta(days)
+        start_day=start_day.strftime("%Y-%m-%d")
+        end_day=end_day.strftime("%Y-%m-%d")
+        try:
+            ret, df = self.quote_ctx.get_history_kline(stock_id, start="2018-01-01",end=end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
+            if not df.empty:
+                #print("一共获取%s行数据"%len(df.index))
+                retlist=[]
+                for index in range(30,len(df.index)):
+                    #dfret = dfret.append(self.get_stock_my_schedule_signal_regress(df[:index]))
+                    retlist.append(self.get_stock_my_schedule_signal_regress(df[:(index+1)]))
+                #print(retlist)
+                dfret= pd.DataFrame(retlist,columns=['code','date','NEWHIGH','MA5','MA120Status','KDJ','MACROSS','DMI2','MACD'])
+                #print(dfret)
+                dfret.to_csv((os.path.join(path,"regress_myschedule_"+ str(stock_id)+".csv")))
+
+        except Exception as e:
+            print("错误：%s,返回结果%s in get_stock_ma_linregress"% (e,df))
+
+
+    #获取多个股票的K线图并计算买卖点。
     def get_multi_stock_kline_and_loop(self,days,market):
         if market == 0: #沪深
             self.init_cn_stock(os.path.join(path,"stocklist.csv"))
@@ -688,7 +776,7 @@ class WhiteGuardStockCore:
             self.active_list = self.hk_stock_list
             #total_stock_count = len(self.hk_stock_list.index)
         elif market == 2:
-            self.init_hk_stock(os.path.join(path,"us_market.csv"))
+            self.init_us_stock(os.path.join(path,"us_market.csv"))
             self.active_list = self.us_stock_list
             #total_stock_count = len(self.us_stock_list.index)
         else:
@@ -705,7 +793,7 @@ class WhiteGuardStockCore:
         # 表头列
         #col_list = ['index','code','time_key','open','close','high','low','pe_ratio','turnover_rate','volume','turnover','change_rate']
         try:
-            ret,df_list=self.quote_ctx.get_multiple_history_kline(self.cn_stock_list['code'].drop_duplicates().values.tolist(),start_day,end_day,'K_DAY','qfq')
+            ret,df_list=self.quote_ctx.get_multiple_history_kline(self.active_list['code'].drop_duplicates().values.tolist(),start_day,end_day,'K_DAY','qfq')
             if ret == 0:
                for df in df_list:
                    #这里针对每个df的数据进行处理
@@ -1255,7 +1343,7 @@ if __name__ == "__main__":
     #loop_all_hk_stocks_from_file("HSIIndexList.csv",60)
     #wgs=WhiteGuardStockCore()
     #wgs=WhiteGuardStockCore('119.29.141.202',11111)
-    market = 0
+    market = 1
     opts, args = getopt.getopt(sys.argv[1:], "hm:")
     for op, value in opts:
         if op == "-m":
@@ -1283,6 +1371,8 @@ if __name__ == "__main__":
     #多个K线的函数调用
     #print(wgs.cn_stock_list['code'])
     #wgs.get_multi_stock_kline_and_loop(120,0)
+    #回归
+    #wgs.calculate_buy_and_sell_point('SZ.002507',120)
     wgs.clear_quote()
     #wechatmsg.add_news_and_send_to_all("Daily Quant Stock Selection(Test Market)",df2html.df_to_html(wgs.hk_stock_list[['code','stock_name']]))
     #wgs.test_notification()
