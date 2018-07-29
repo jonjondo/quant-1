@@ -38,73 +38,72 @@ import time as t
 from stock_user_manager import StockUserMgr
 
 
-def get_stock_dmi_my_signal(quote_ctx, stock_id, market_snap_data):
+
+def process_single_df(dfret, stock_id, market_snap_data):
     N, MM = 14, 6
+    high = dfret['high']
+    size = len(high)
+    high[size] = market_snap_data[stock_id][0]
+
+    low = dfret['low']
+    low[size] = market_snap_data[stock_id][1]
+    close = dfret['close']
+    close[size] = market_snap_data[stock_id][2]
+    df = pd.DataFrame()
+    df['h-l'] = high - low
+    df['h-c'] = abs(high - close.shift(1))
+    df['l-c'] = abs(close.shift(1) - low)
+    df['tr'] = df.max(axis=1)
+
+    df['PDM'] = high - high.shift(1)
+    df['MDM'] = low.shift(1) - low
+    df['DPD'] = 0
+    df['DMD'] = 0
+    for i in range(len(df.index)):
+        PDM = df.ix[i, 'PDM']
+        MDM = df.ix[i, 'MDM']
+        if PDM < 0 or PDM < MDM:
+            df.ix[i, 'DPD'] = 0
+        else:
+            df.ix[i, 'DPD'] = PDM
+        if MDM < 0 or MDM < PDM:
+            df.ix[i, 'DMD'] = 0
+        else:
+            df.ix[i, 'DMD'] = MDM
+
+        df['NTR'] = ta.EMA(df['tr'], N)
+        df['NPDM'] = ta.EMA(df['DPD'], N)
+        df['NMDM'] = ta.EMA(df['DMD'], N)
+        df['PDI'] = df['NPDM'] / df['NTR'] * 100
+        df['MDI'] = df['NMDM'] / df['NTR'] * 100
+
+    ma20 = ta.SMA(dfret['close'].values, timeperiod=20)
+    df['DX'] = ta.EMA((df['NPDM'] - df['NMDM']) / (df['NMDM'] + df['NPDM']) * 100, MM)
+    df['ADX'] = df['DX']
+    df['ADXR'] = ta.EMA(df['ADX'], MM)
+    df['AAJ'] = 0
+    df['AAJ'] = ta.EMA(3 * df['ADX'] - 2 * df['ADXR'], 2)
+    return df['AAJ'], ma20
+
+def get_stocks_dmi_my_signal(quote_ctx, stock_ids, market_snap_data):
     now = datetime.now()
     start_day = (now - timedelta(90)).strftime("%Y-%m-%d")
-
     ## 往前读多一天，创造Index
     end_day = (now + timedelta(1)).strftime("%Y-%m-%d")
-    df = pd.DataFrame()
-    ma20=[]
-    try:
-        ret, dfret = quote_ctx.get_history_kline(stock_id, start_day, end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
-    #print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')) 
+
+    stock_id_2_aaj = {}
+    stock_id_2_ma20 = {}
+
+    ret, dfrets = quote_ctx.get_multiple_history_kline(stock_ids, start_day, end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
+    for idx, dfret in enumerate(dfrets):
         if not dfret.empty:
-            high = dfret['high']
-
-            size = len(high)
-
-            high[size] = market_snap_data[stock_id][0]
-
-            low = dfret['low']
-            low[size] = market_snap_data[stock_id][1]
-            close = dfret['close']
-            close[size] = market_snap_data[stock_id][2]
-            #df = pd.DataFrame()
-            df['h-l'] = high - low
-            df['h-c'] = abs(high - close.shift(1))
-            df['l-c'] = abs(close.shift(1) - low)
-            df['tr'] = df.max(axis=1)
-
-        # df['tr']=ta.EMA(df['tr'],N)
-        # EXPMEMA(MAX(MAX(HIGH-LOW,ABS(HIGH-REF(CLOSE,1))),ABS(REF(CLOSE,1)-LOW)),N);
-            df['PDM'] = high - high.shift(1)
-            df['MDM'] = low.shift(1) - low
-            df['DPD'] = 0
-            df['DMD'] = 0
-            for i in range(len(df.index)):
-                PDM = df.ix[i, 'PDM']
-                MDM = df.ix[i, 'MDM']
-                if PDM < 0 or PDM < MDM:
-                    df.ix[i, 'DPD'] = 0
-                else:
-                    df.ix[i, 'DPD'] = PDM
-                if MDM < 0 or MDM < PDM:
-                    df.ix[i, 'DMD'] = 0
-                else:
-                    df.ix[i, 'DMD'] = MDM
-
-                df['NTR'] = ta.EMA(df['tr'], N)
-                df['NPDM'] = ta.EMA(df['DPD'], N)
-                df['NMDM'] = ta.EMA(df['DMD'], N)
-                df['PDI'] = df['NPDM'] / df['NTR'] * 100
-                df['MDI'] = df['NMDM'] / df['NTR'] * 100
-
-            ma20 = ta.SMA(dfret['close'].values, timeperiod=20)
-            df['DX'] = ta.EMA((df['NPDM'] - df['NMDM']) / (df['NMDM'] + df['NPDM']) * 100, MM)
-            df['ADX'] = df['DX']
-            df['ADXR'] = ta.EMA(df['ADX'], MM)
-            df['AAJ'] = 0
-            df['AAJ'] = ta.EMA(3 * df['ADX'] - 2 * df['ADXR'], 2)
-
-            dfret = pd.concat([dfret, df], axis=1)
+            curr_stock_id = stock_ids[idx]
+            curr_aaj, ma20 = process_single_df(dfret, curr_stock_id, market_snap_data)
+            stock_id_2_aaj[curr_stock_id] = curr_aaj
+            stock_id_2_ma20[curr_stock_id] = ma20
         else:
-            df['AAJ']=None
-            dfret = pd.concat([dfret, df], axis=1)
-    except:
-        return None,ma20 
-    return df['AAJ'], ma20
+            print("Failed to process " + stock_ids[idx])
+    return stock_id_2_aaj, stock_id_2_ma20
 
 def aaj_out_bound(upper, lower, aaj):
     return aaj >= upper or aaj <= lower
@@ -129,7 +128,6 @@ def my_monitor(quote_ctx, mgr):
 
     # 股票分类
     china_list = list(filter(lambda x: ("HK" in x[:2]) or ("SH" in x[:2]) or ("SZ" in x[:2]), stock_ids))
-    #print(china_list)
     us_list = list(filter(lambda x: ("US" in x), stock_ids))
     # 当前检测的列表，默认是全部
     working_list = stock_ids
@@ -147,7 +145,7 @@ def my_monitor(quote_ctx, mgr):
     curr_time = time(now.hour, now.minute)
 
     # 检查市场状态
-    ret, market_states = quote_ctx.get_global_state()
+    # ret, market_states = quote_ctx.get_global_state()
     if (time_in_range(Chinese_market_open, Chinese_market_close, curr_time)):
         working_list = china_list
         market_is_open = True
@@ -177,15 +175,17 @@ def my_monitor(quote_ctx, mgr):
     if not df_total_snap.empty:
         for i in range(len(df_total_snap.index)):
             snap_data = [df_total_snap['high_price'][i], df_total_snap['low_price'][i], df_total_snap['last_price'][i]]
-            #这里的代码有问题，你看下，就这句赋值，我看不懂 
             market_snap_data[df_total_snap['code'][i]] = snap_data
     else:
         print("Fail to read the market snap data")
-     
+
+    stock_id_2_aaj, stock_id_2_ma20 = get_stocks_dmi_my_signal(quote_ctx, working_list, market_snap_data)
 
     for stock in working_list:
-        aaj, ma20 = get_stock_dmi_my_signal(quote_ctx, stock, market_snap_data)
+        aaj = stock_id_2_aaj[stock]
+        ma20 = stock_id_2_ma20[stock]
         if len(aaj) == 0:
+            print("ERROR: stock " + stock + " has no data")
             continue
         last = len(aaj)
         curr_aaj = aaj[last - 1]
