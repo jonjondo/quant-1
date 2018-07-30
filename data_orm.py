@@ -57,5 +57,5 @@ class StockRecord(Base):
 )
 
 
-engine = create_engine('mysql+pymysql://root:@localhost:3306/quant')
+engine = create_engine('mysql+pymysql://root:langzm@localhost:3306/quant')
 Base.metadata.create_all(engine)

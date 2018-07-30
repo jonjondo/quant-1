@@ -76,13 +76,16 @@ def process_single_df(dfret, stock_id, market_snap_data):
         df['NMDM'] = ta.EMA(df['DMD'], N)
         df['PDI'] = df['NPDM'] / df['NTR'] * 100
         df['MDI'] = df['NMDM'] / df['NTR'] * 100
-
-    ma20 = ta.SMA(dfret['close'].values, timeperiod=20)
-    df['DX'] = ta.EMA((df['NPDM'] - df['NMDM']) / (df['NMDM'] + df['NPDM']) * 100, MM)
-    df['ADX'] = df['DX']
-    df['ADXR'] = ta.EMA(df['ADX'], MM)
-    df['AAJ'] = 0
-    df['AAJ'] = ta.EMA(3 * df['ADX'] - 2 * df['ADXR'], 2)
+    try:
+        ma20 = ta.SMA(dfret['close'].values, timeperiod=20)
+        df['DX'] = ta.EMA((df['NPDM'] - df['NMDM']) / (df['NMDM'] + df['NPDM']) * 100, MM)
+        df['ADX'] = df['DX']
+        df['ADXR'] = ta.EMA(df['ADX'], MM)
+        df['AAJ'] = 0
+        df['AAJ'] = ta.EMA(3 * df['ADX'] - 2 * df['ADXR'], 2)
+    except:
+       print("计算ADX失败%s"%stock_id)
+       df['AAJ']=None
     return df['AAJ'], ma20
 
 def get_stocks_dmi_my_signal(quote_ctx, stock_ids, market_snap_data):
@@ -135,8 +138,8 @@ def my_monitor(quote_ctx, mgr):
     cur_aaj_values = {}
     market_is_open = False
     #TODO： 冬令时和夏令时，而且应该用UTC时间，考虑到加村和中国刚好相反
-    Chinese_market_open = time(9, 30)
-    Chinese_market_close = time(14, 0)
+    Chinese_market_open = time(7, 30)
+    Chinese_market_close = time(16, 0)
 
     US_market_open = time(21, 30)
     US_market_close = time(4, 0)
@@ -212,7 +215,7 @@ def my_monitor(quote_ctx, mgr):
         # decision = "SELL"
         # elif curr_aaj > prev_aaj:
         # decision = "BUY"
-        print("正在处理%s"%stock)
+        print("正在处理%s %s %s"%(stock,descision,op))
         mgr.search_stockrecord_by_stockcode_semi_rt(stock,descision, op)
 
 if __name__ == "__main__":
