@@ -1273,8 +1273,8 @@ class WhiteGuardStockCore:
                     oper = -1
                 else:
                     oper = 1
-                self.smgr.update_stock_operation(df_today_selection.iloc[i]['code'],oper)
-                self.smgr.search_stockrecord_by_stockcode(df_today_selection.iloc[i]['code'])
+                #self.smgr.update_stock_operation(df_today_selection.iloc[i]['code'],oper)
+                self.smgr.search_stockrecord_by_stockcode(df_today_selection.iloc[i]['code'],oper)
 
     def test_notification(self):
         df_storage = pb.read_csv(os.path.join(path,"tempfile/US_storagelist.csv"),encoding='gbk')
@@ -1286,13 +1286,13 @@ class WhiteGuardStockCore:
         wechatmsg.add_news_and_send_to_all("Daily Quant(Test Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html,market)
         for i in range(len(df_storage.index)):
             oper = 0
-            self.smgr.search_stockrecord_by_stockcode(df_storage.ix[i,'code'])
             print()
             if df_storage.iloc[i]['operation'] == 'SELL':
                 oper = -1
             else:
                 oper = 1
             print(df_storage.ix[i,'operation'],oper)
+            self.smgr.search_stockrecord_by_stockcode(df_storage.ix[i,'code'],oper)
 
     #还没写好，回测功能函数
     def calculate_rate_of_my_schedule(self):

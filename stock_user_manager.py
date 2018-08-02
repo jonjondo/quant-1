@@ -82,20 +82,23 @@ class StockUserMgr:
             self.add_stock(df.ix[i,'code'],df.ix[i,'stock_name'],df.ix[i,'industry'].astype(str),df.ix[i,'market'].astype(str),df.ix[i,'operation'].astype(str))
             #add_stock_record(df.ix[i,'code'],df.ix[i,'useropenid'],0)
             self.add_stock_record(df.ix[i,'code'],df.ix[i,'stock_name'],df.ix[i,'useropenid'],df.ix[i,'operation'].astype(str))
-    def search_stockrecord_by_stockcode(self,stock_code):
+    def search_stockrecord_by_stockcode(self,stock_code,advice_oper):
         stockrecord = self.session.query(StockRecord).filter(StockRecord.stockid == stock_code).all()
         if stockrecord != None:
             for sr in stockrecord:
                 #print(sr.stockid,sr.userid,sr.operation)
-                oper='WAIT'
-                if sr.operation == -1:
-                    oper='SELL'
-                elif sr.operation == 1:
-                    oper='BUY'
-                else:
+                if sr.operation != advice_oper:
+                    self.update_stock_operation(stock_code,advice_oper)
                     oper='WAIT'
-                #print(sr.userid,sr.stockid,search_stockname_by_stockcode(sr.stockid),'--',oper)
-                wa.send_template_msg(sr.userid,sr.stockid,sr.stockname,'--',oper)
+                    if advice_oper == -1:
+                        oper='SELL'
+                    elif advice_oper == 1:
+                        oper='BUY'
+                    else:
+                        oper='WAIT'
+                    #print(sr.userid,sr.stockid,search_stockname_by_stockcode(sr.stockid),'--',oper)
+
+                    wa.send_template_msg(sr.userid,sr.stockid,sr.stockname,'--',oper)
 
     def search_stockrecord_by_stockcode_semi_rt(self,stock_code, semi_rt_oper, hints):
         stockrecord = self.session.query(StockRecord).filter(StockRecord.stockid == stock_code).all()

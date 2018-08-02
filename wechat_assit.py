@@ -46,8 +46,8 @@ def send_template_msg(userid,stockname,stockid,price,operation):
         tmpid = '2ab6uPK6RdLotx4599G-Cpo3Br_yrNuUeUf9tzovxE0'
 
     data['first']={'value':caption,'color':opcolor}
-    data['keyword1']={'value': stockname,'color':"#173177"}
-    data['keyword2']={'value': stockid,'color':"#173177"}
+    data['keyword1']={'value': stockid,'color':"#173177"}
+    data['keyword2']={'value': stockname,'color':"#173177"}
     data['keyword3']={'value': operation,'color':opcolor}
     data['keyword4']={'value': price,'color':"#173177"}
     data['keyword5']={'value': time.strftime("%Y%m%d %H:%M",time.localtime(time.time()))}
