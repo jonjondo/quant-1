@@ -185,8 +185,11 @@ def my_monitor(quote_ctx, mgr):
     stock_id_2_aaj, stock_id_2_ma20 = get_stocks_dmi_my_signal(quote_ctx, working_list, market_snap_data)
 
     for stock in working_list:
-        aaj = stock_id_2_aaj[stock]
-        ma20 = stock_id_2_ma20[stock]
+        try: 
+            aaj = stock_id_2_aaj[stock]
+            ma20 = stock_id_2_ma20[stock]
+        except:
+            continue
         if len(aaj) == 0:
             print("ERROR: stock " + stock + " has no data")
             continue
@@ -196,35 +199,45 @@ def my_monitor(quote_ctx, mgr):
         mid = ma20[-1]
         descision = ""
         op = ""
-        if (market_snap_data[stock][2] >= mid and curr_aaj > prev_aaj):
-            descision = 'BUY'
-            op = "趋势反转，超过20日均线，可以考虑加仓"
-        elif (market_snap_data[stock][2] < mid and curr_aaj < prev_aaj):
-            descision = 'SELL'
-            op = "低于MA20并趋势向下，可以考虑减仓或者止损"
-        # elif (market_snap_data[stock][2] <  mid and trend_record[stock] == "BUY closed price > ma20"): 因为满足条件1 以后，数据库的记录会变化，这个会导致发邮件过于频繁 TODO: 三个点的线性回归判断
-        #    descision = "SELL closed price < ma20"
-        elif (curr_aaj > aaj_upper and curr_aaj < prev_aaj) or (prev_aaj >= aaj_upper and curr_aaj <= aaj_upper):
-            descision = 'SELL'
-            op = "顶部趋势扭转，逃顶/清仓"
-        elif ((curr_aaj < aaj_lower and curr_aaj > prev_aaj) or (prev_aaj < aaj_lower and curr_aaj > aaj_lower)):
-            descision = 'BUY'
-            op = "底部趋势扭转，抄底/建仓"
+        try:
+            if (market_snap_data[stock][2] >= mid and curr_aaj > prev_aaj):
+                descision = 'BUY'
+                op = "趋势反转，超过20日均线，可以考虑加仓"
+            elif (market_snap_data[stock][2] < mid and curr_aaj < prev_aaj):
+                descision = 'SELL'
+                op = "低于MA20并趋势向下，可以考虑减仓或者止损"
+            # elif (market_snap_data[stock][2] <  mid and trend_record[stock] == "BUY closed price > ma20"): 因为满足条件1 以后，数据库的记录会变化，这个会导致发邮件过于频繁 TODO: 三个点的线性回归判断
+            #    descision = "SELL closed price < ma20"
+            elif (curr_aaj > aaj_upper and curr_aaj < prev_aaj) or (prev_aaj >= aaj_upper and curr_aaj <= aaj_upper):
+                descision = 'SELL'
+                op = "顶部趋势扭转，逃顶/清仓"
+            elif ((curr_aaj < aaj_lower and curr_aaj > prev_aaj) or (prev_aaj < aaj_lower and curr_aaj > aaj_lower)):
+                descision = 'BUY'
+                op = "底部趋势扭转，抄底/建仓"
+            else:
+                descision = 'WAIT'
+                op = '等待时机'
         # 单纯地看趋势扭转太敏感
         # elif curr_aaj  < prev_aaj:
         # decision = "SELL"
         # elif curr_aaj > prev_aaj:
         # decision = "BUY"
-        print("正在处理%s %s %s"%(stock,descision,op))
-        mgr.search_stockrecord_by_stockcode_semi_rt(stock,descision, op)
+            print("处理%s %s 完成"%(stock,descision))
+        #mgr.search_stockrecord_by_stockcode_semi_rt(stock,descision, op)
+        except:
+            print("处理%s %s 失败，数据可能为空"%(stock,descision))
+            continue
 
 if __name__ == "__main__":
     API_SVR_IP = '127.0.0.1'
     API_SVR_PORT = 11111
     quote_ctx = OpenQuoteContext(host=API_SVR_IP, port=API_SVR_PORT)  # 创建行情api
-
+    startTime = int(round(t.time() * 1000))
+    print("开始量化处理%s"%int(round(t.time() * 1000)))
     mgr = StockUserMgr()
     my_monitor(quote_ctx, mgr)
+    endTime = int(round(t.time() * 1000))
+    print("处理结束,总共耗时%s"%(endTime - startTime))
     quote_ctx.close()
 
 
