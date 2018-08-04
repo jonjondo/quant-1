@@ -113,30 +113,12 @@ class WhiteGuardStockCore:
         try:
             ret,df=self.quote_ctx.get_history_kline(stock_id,start=start_day,end=end_day,ktype='K_DAY', autype='qfq')
             if not df.empty:
-                df['open'].astype('float')
-                df['close'].astype('float')
-                df['high'].astype('float')
-                df['low'].astype('float')
-                df['pe_ratio'].astype('float')
-                df['turnover_rate'].astype('float')
-                df['volume'].astype('float')
-                df['turnover'].astype('float')
-                df['change_rate'].astype('float')
-                period_high=df['high'].max()
-                #print period_high
-                today_high=df.iloc[len(df)-1]['high']
-                #这里不能直接用 .values
-                #如果用的df【：1】 就需要用.values
-                #print today_high
-                if today_high>=period_high:
-                    #df.to_csv('d:/high.csv')
-                    #print("代码：%s 今日最高:%0.2f 阶段最高 %0.2f"%(stock_id,today_high,period_high))
-                    return True
-                else:
-                    return False
+                return  self.is_cn_stock_break_high_from_futu_data(df)
         except Exception as e:
-            print("%s 错误：%s 返回结果%s in %s"% (stock_id,e,df,"is_cn_stock_break_high_from_futu"))
+            print("%s 错误：%s 返回结果%s in %s"% (df['code'].to_list()[0],e,"is_cn_stock_break_high_from_futu"))
             return  False
+
+
     def is_cn_stock_break_high_from_futu_data(self,stock_data):
         try:
             df = stock_data
@@ -176,14 +158,7 @@ class WhiteGuardStockCore:
         end_day=end_day.strftime("%Y-%m-%d")
         try:
             ret, df = self.quote_ctx.get_history_kline(stock_id, start=start_day,end=end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
-            #提取收盘价
-            closed=df['close'].values
-             #获取均线的数据，通过timeperiod参数来分别获取 5,10,20 日均线的数据。
-            ma=ta.SMA(closed,timeperiod=ma_days)
-            if closed[-1] >= ma[-1]:
-                return True
-            else:
-                return  False
+            return self.is_cn_stock_close_up_than_ma_data(df,ma_days)
         except Exception as e:
             print("错误：%s,返回结果%s"% (e))
      #计算收盘价是否站上MA(x)的值,不调富途接口
@@ -331,41 +306,11 @@ class WhiteGuardStockCore:
         end_day=end_day.strftime("%Y-%m-%d")
         try:
             ret,stock_data=self.quote_ctx.get_history_kline(stock_id,start=start_day,end=end_day,ktype='K_DAY', autype='qfq')
-            if not stock_data.empty:
-                low_list = pd.rolling_min(stock_data['low'], 9)
-                low_list.fillna(value=pd.expanding_min(stock_data['low']), inplace=True)
-                high_list = pd.rolling_max(stock_data['high'], 9)
-                high_list.fillna(value=pd.expanding_max(stock_data['high']), inplace=True)
-                rsv = (stock_data['close'] - low_list) / (high_list - low_list) * 100
-                stock_data['KDJ_K'] = pd.ewma(rsv, com=2)
-                stock_data['KDJ_D'] = pd.ewma(stock_data['KDJ_K'], com=2)
-                stock_data['KDJ_J'] = 3 * stock_data['KDJ_K'] - 2 * stock_data['KDJ_D']
-                # 计算KDJ指标金叉、死叉情况
-                stock_data['KDJ_金叉死叉'] = ''
-                kdj_position_gold = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_K'] <= 50)|(stock_data['KDJ_J'] < 0)
-
-                kdj_position_die = (stock_data['KDJ_K'] > stock_data['KDJ_D']) & (stock_data['KDJ_D'] > 50 )
-                try:
-                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index, 'KDJ_金叉死叉'] = 1
-                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index-1, 'KDJ_金叉死叉'] = 1
-                    stock_data.loc[kdj_position_gold[(kdj_position_gold == True) & (kdj_position_gold.shift() == False)].index-2, 'KDJ_金叉死叉'] = 1
-                    stock_data.loc[kdj_position_die[(kdj_position_die == False) & (kdj_position_die.shift() == True)].index, 'KDJ_金叉死叉'] = -1
-                except:
-                    pass
-                #stock_data.to_csv("00700KDJ.csv", index=True, sep=',')
-                if len(stock_data.index) > 3:
-                    #过去三天出了金叉,或过去三天有J无限接近底部,同时没有扭头向下的话，,标为1.
-                    for pos in range(1,4):
-                        if (stock_data.iloc[-pos]['KDJ_金叉死叉'] == 1)  and (stock_data.iloc[-1]['KDJ_J'] >= stock_data.iloc[-1]['KDJ_K']):
-                            return  True
-                        #(stock_data.iloc[-1]['KDJ_J'] < 1 or stock_data.iloc[-2]['KDJ_J'] < 1 or stock_data.iloc[-3]['KDJ_J'] < 1 or stock_data.iloc[-4]['KDJ_J'] < 1 or stock_data.iloc[-5]['KDJ_J'] < 1) and\
-                        #print("股票%s 近三日内出现KDJ金叉"%(stock_id))
-
-                    else:
-                        return  False
+            return self.get_stock_kdj_buy_signal_data(stock_data)
         except Exception as e:
             print("%s 错误：%s 返回结果%s in %s"% (stock_id,e,stock_data,"get_stock_kdj_buy_signal"))
             return  False
+
     def get_stock_kdj_buy_signal_data(self,stock_data):
         # 计算KDJ指标
         try:
@@ -422,22 +367,7 @@ class WhiteGuardStockCore:
         end_day=end_day.strftime("%Y-%m-%d")
         try:
             ret, df = self.quote_ctx.get_history_kline(stock_id, start=start_day,end=end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
-            if not df.empty:
-            #提取收盘价
-                closed=df['close'].values
-                 #获取均线的数据，通过timeperiod参数来分别获取 5,10,20 日均线的数据。
-                df['MA5']=ta.SMA(closed,timeperiod=5)
-                df['MA10']=ta.SMA(closed,timeperiod=10)
-                df['MA20']=ta.SMA(closed,timeperiod=20)
-            if len(df.index) > 20:
-                    #这里写策略，穿越策略,如果五日线过去20个交易日有穿越十日线
-                    for pos in range(5):
-                        if (df.iloc[-pos]['MA5'] - df.iloc[-pos]['MA10'] < 1)  and (df.iloc[-pos]['MA5'] - df.iloc[-pos]['MA10'] > 0) and (df.iloc[-pos-1]['MA5'] - df.iloc[-pos-1]['MA10'] < 0):
-                            #print("%s 倒数第%s日 MA5:%s 穿越 MA10:%s"%(stock_id,pos,df.iloc[-pos]['MA5'],df.iloc[-pos]['MA10']))
-                            return  True
-                        if pos >= len(df.index):
-                            return  False
-                    return False
+            return self.get_stock_ma_cross_signal_data(df)
         except Exception as e:
             print("错误：%s,返回结果%s in get_stock_ma_cross_signal"% (e,df))
 
@@ -468,40 +398,7 @@ class WhiteGuardStockCore:
     def get_stock_my_macd_signal(self,stock_id,start_day,end_day):
         try:
             ret, stock_data = self.quote_ctx.get_history_kline(stock_id, start=start_day,end=end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
-            if not stock_data.empty:
-                close = [float(x) for x in stock_data['close']]
-                #计算MACD
-                stock_data['EMA12'] = ta.EMA(np.array(close), timeperiod=12)
-                stock_data['EMA26'] = ta.EMA(np.array(close), timeperiod=26)
-                # 调用talib计算MACD指标
-                stock_data['MACD'],stock_data['MACDsignal'],stock_data['MACDhist'] = ta.MACD(np.array(close),fastperiod=12, slowperiod=26, signalperiod=9)
-                stock_data['my_MACD'],stock_data['my_MACDsignal'],stock_data['my_MACDhist'] = self.my_macd(stock_data['close'].values, fastperiod=6, slowperiod=12, signalperiod=9)
-                def  cal_c(a,b):
-                    if abs(a) > abs(b):
-                        return abs(abs(a)- abs(b))/abs(a)
-                    else:
-                        return abs(abs(b)-abs(a))/abs(b)
-
-                stock_data['MACD_DIS'] = stock_data.apply(lambda stock_data:cal_c(stock_data['MACD'],stock_data['MACDsignal']), axis=1)#abs(stock_data['MACDsignal'] - stock_data['MACD'])/abs(stock_data['MACDsignal'])
-                #macd_postion= (stock_data['MACD'] > stock_data['MACDsignal'])
-                macd_postion= (stock_data['MACD'] < stock_data['MACDsignal']) & (stock_data['MACD_DIS'] < 0.45) & (stock_data['MACD'] > stock_data['MACD'].shift())
-                try:
-                    stock_data.loc[macd_postion[(macd_postion == True) & (macd_postion.shift() == False)].index, 'MACD_CROSS'] = 1
-                    stock_data.loc[macd_postion[(macd_postion == True) & (macd_postion.shift() == False)].index-1, 'MACD_CROSS'] = 2
-                    stock_data.loc[macd_postion[(macd_postion == True) & (macd_postion.shift() == False)].index-2, 'MACD_CROSS'] = 3
-                    stock_data.loc[macd_postion[(macd_postion == True) & (macd_postion.shift() == False)].index-3, 'MACD_CROSS'] = 4
-                except:
-                    pass
-                #print(stock_data)
-                if len(stock_data.index) > 20:
-                    #这里写策略，穿越策略,如果五日内有发现置1了
-                    for pos in range(5):
-                        if stock_data.iloc[-pos]['MACD_CROSS'] >=1:
-                            print("%s 倒数第%s日 MACD_CROSS:%s 趋势穿越"%(stock_id,pos,stock_data.iloc[-pos]['time_key']))
-                            return  True
-                        if pos >= len(stock_data.index):
-                            return  False
-                    return False
+            return  self.get_stock_my_macd_signal_data(stock_data)
         except Exception as e:
             print("错误：%s,返回结果%s in get_stock_my_macd_signal"% (e,stock_data))
 
@@ -684,18 +581,7 @@ class WhiteGuardStockCore:
         end_day=end_day.strftime("%Y-%m-%d")
         try:
             ret, df = self.quote_ctx.get_history_kline(stock_id, start=start_day,end=end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
-            if not df.empty:
-                df['open'].astype('float')
-                df['close'].astype('float')
-            #提取收盘价
-                #closed=df['close'].values
-                slope, intercept, r_value, p_value, std_err = stats.linregress(df.index,df['close'].values)
-                #print("%s %s线斜率%s"%(stock_id,days,slope))
-                if slope < line_slope_up and  slope > line_slope_low:#排除掉下跌特别猛的
-                    return  False
-                else:
-                    return  True
-
+            return  self.get_stock_ma_linregress_data(df)
         except Exception as e:
             print("错误：%s,返回结果%s in get_stock_ma_linregress"% (e,df))
     #MA的线性回归的斜率
@@ -831,98 +717,8 @@ class WhiteGuardStockCore:
         N,MM=14,6
         ret, dfret = self.quote_ctx.get_history_kline(stock_id, start_day,end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
         if not dfret.empty:
-            high=dfret['high']
-            low=dfret['low']
-            close=dfret['close']
-            df = pd.DataFrame()
-            df['h-l']=high-low
-            df['h-c']=abs(high-close.shift(1))
-            df['l-c']=abs(close.shift(1)-low)
-            df['tr']=df.max(axis=1)
-            #df['tr']=ta.EMA(df['tr'],N)
-            #EXPMEMA(MAX(MAX(HIGH-LOW,ABS(HIGH-REF(CLOSE,1))),ABS(REF(CLOSE,1)-LOW)),N);
-            df['PDM']=high-high.shift(1)
-            df['MDM']=low.shift(1)-low
-            df['DPD']=0
-            df['DMD']=0
-            for i in range(len(df.index)):
-                PDM=df.ix[i,'PDM']
-                MDM=df.ix[i,'MDM']
-                if PDM<0 or PDM<MDM:
-                    df.ix[i,'DPD']=0
-                else:
-                    df.ix[i,'DPD']=PDM
-                if MDM<0 or MDM<PDM:
-                    df.ix[i,'DMD']=0
-                else:
-                    df.ix[i,'DMD']=MDM
-                #下面这段是原先的代码，先注释掉吧
-                # for i in range(N,len(df.index)):
-                #     #df.ix[i,'NTR']=sum(df.ix[i-N+1:i,'tr'])
-                #     #df.ix[i,'NPDM']=sum(df.ix[i-N+1:i,'DPD'])
-                #     #df.ix[i,'NMDM']=sum(df.ix[i-N+1:i,'DMD'])
-                #     #df.ix[i,'NTR']=ta.EMA(df.ix[i-N+1:i,'tr'],N).values[-1]
-                #     #df.ix[i,'NPDM']=ta.EMA(df.ix[i-N+1:i,'DPD'],N).values[-1]
-                #     #df.ix[i,'NMDM']=ta.EMA(df.ix[i-N+1:i,'DMD'],N).values[-1]
-                #     pass
-                df['NTR']=ta.EMA(df['tr'],N)
-                df['NPDM']=ta.EMA(df['DPD'],N)
-                df['NMDM']=ta.EMA(df['DMD'],N)
-                df['PDI']=df['NPDM']/df['NTR']*100
-                df['MDI']=df['NMDM']/df['NTR']*100
+            return  self.get_stock_dmi_my_signal_data(dfret)
 
-
-            #df['DX']=abs(df['MDI']-df['PDI'])/(df['MDI']+df['PDI'])*100
-            #ADX0:=EMA((DMP-DMM)/(DMP+DMM)*100,M);
-            #ADXR0:=EMA(ADX0,M);
-            df['DX']=ta.EMA((df['NPDM']-df['NMDM'])/(df['NMDM']+df['NPDM'])*100,MM)
-            df['ADX']=df['DX']
-            df['ADXR']=ta.EMA(df['ADX'],MM)
-            df['AAJ'] =0
-            df['AAJ'] = ta.EMA(3*df['ADX']-2*df['ADXR'],2)
-            # for i in range(MM,len(df.index)):
-            #     summDX=0
-            #     summADX=0
-            #     for j in range(i-MM,i):
-            #         summDX+=df.ix[j,'DX']
-            #         summADX+=df.ix[j,'ADX']
-            #     df.ix[i,'ADX']=summDX/MM
-            #     summADX+=df.ix[j,'ADX']
-            #     df.ix[i,'ADXR']=summADX/MM
-            #算好了拼一下
-            dfret = pd.concat([dfret, df], axis=1)
-
-            '''
-            #绘图函数暂时注释
-            fig = plt.figure(figsize=[18,6])
-            fig.autofmt_xdate()
-            dfret['date'] = pd.to_datetime(dfret['time_key'])
-            dfret.index = dfret['date'].tolist()
-            #print(dfret)
-            plt.plot(dfret.index.to_pydatetime() ,dfret['ADX'] ,label='ADX',linestyle='-',color='#ff0000',alpha=0.1)
-            plt.plot(dfret.index.to_pydatetime() ,dfret['ADXR'] ,label='ADXR',linestyle='-',color='#00ff00',alpha=0.1)
-            plt.fill_between(dfret.index.to_pydatetime(), dfret['ADX'], dfret['ADXR'], dfret['ADX'] > dfret['ADXR'],color='#ff0000', alpha=1)
-            plt.fill_between(dfret.index.to_pydatetime(), dfret['ADX'], dfret['ADXR'], dfret['ADX'] < dfret['ADXR'],color='#00ff00', alpha=1)
-            plt.plot(dfret.index.to_pydatetime() ,dfret['PDI'] ,label='PDI',color="#3383ba")
-            plt.plot(dfret.index.to_pydatetime() ,dfret['MDI'] ,label='MDI',color="#eb8a35")
-            plt.plot(dfret.index.to_pydatetime() ,dfret['AAJ'] ,label='AAJ',color="#51b151")
-            plt.ylim((-110, 110))
-            plt.xlabel("Trading Cycle")
-            plt.ylabel("Fluctuation Ratio")
-            plt.title('%s DMI2 Indicator'%stock_id)
-            plt.gca().xaxis.set_major_formatter(mdate.DateFormatter('%Y/%m/%d'))
-            #plt.gca().xaxis.set_major_locator(mdate.DayLocator())
-            plt.gca().xaxis.set_major_locator(ticker.MultipleLocator(5))
-            plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(10))
-            plt.setp(plt.gca().get_xticklabels(), rotation=45)
-
-            plt.legend(loc='best')
-            plt.grid()
-            #记得加这一句，不然不会显示图像
-            plt.show()
-            '''
-        #return df['PDI'],df['MDI'],df['ADX'],df['ADXR']
-        return  dfret
     def get_stock_dmi_my_signal_data(self,stock_data):
         N,MM=14,6
         #ret, dfret = self.quote_ctx.get_history_kline(stock_id, start_day,end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
