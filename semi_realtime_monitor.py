@@ -40,6 +40,7 @@ from stock_user_manager import StockUserMgr
 
 
 def process_single_df(dfret, stock_id, market_snap_data):
+    startTime = int(round(t.time() * 1000))
     N, MM = 14, 6
     high = dfret['high']
     size = len(high)
@@ -83,8 +84,10 @@ def process_single_df(dfret, stock_id, market_snap_data):
         df['ADXR'] = ta.EMA(df['ADX'], MM)
         df['AAJ'] = 0
         df['AAJ'] = ta.EMA(3 * df['ADX'] - 2 * df['ADXR'], 2)
+        endTime = int(round(t.time() * 1000))
+        print("计算AAJ成功,耗时%sms"%(endTime - startTime))
     except:
-       print("计算ADX失败%s"%stock_id)
+       print("计算AAJ失败%s"%stock_id)
        df['AAJ']=None
     return df['AAJ'], ma20
 
@@ -138,8 +141,8 @@ def my_monitor(quote_ctx, mgr):
     cur_aaj_values = {}
     market_is_open = False
     #TODO： 冬令时和夏令时，而且应该用UTC时间，考虑到加村和中国刚好相反
-    Chinese_market_open = time(7, 30)
-    Chinese_market_close = time(16, 0)
+    Chinese_market_open = time(9, 30)
+    Chinese_market_close = time(22, 0)
 
     US_market_open = time(21, 30)
     US_market_close = time(4, 0)

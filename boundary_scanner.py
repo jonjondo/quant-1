@@ -9,13 +9,12 @@ import os
 
 sys.path.append(os.path.split(os.path.abspath(os.path.pardir))[0])
 ## from futuquant import *
-from futuquant.open_context import *
-
+from futuquant import *
+import send_email as sm
 import tushare as ts
 import talib as ta
 import matplotlib
 import matplotlib.pyplot as plt
-from futuquant.open_context import *
 import datetime
 import numpy as np
 import pandas as pb
@@ -57,14 +56,14 @@ header = table.iloc[0]
 corrected_table = sliced_table.rename(columns=header)
 DAO_30 = corrected_table['Symbol'].tolist()
 
-receipients = ["zhoubinjason@gmail.com", "wangpenghehe@qq.com"]
+receipients = ["wangpenghehe@qq.com"]
 
 
 class EmailNotification(object):
     """邮件提醒类"""
-    sender = 'mr_right_words@outlook.com'
-    password = 'CatsHateDogs66?'
-    smtpserver = 'smtp.office365.com'
+    sender = 'wangpenghehe@qq.com'
+    password = 'tingting520'
+    smtpserver = 'smtp.qq.com:465'
     enable = True
 
     @staticmethod
@@ -86,7 +85,7 @@ class EmailNotification(object):
             msg['to'] = receiver  # 收信人地址
 
             smtp = smtplib.SMTP()
-            smtp.connect(EmailNotification.smtpserver, 587)
+            smtp.connect(EmailNotification.smtpserver, 465)
             smtp.starttls()
             smtp.ehlo()
             smtp.login(EmailNotification.sender, EmailNotification.password)
@@ -260,11 +259,14 @@ def generate_list(quote_ctx, market, file_name, upper, lower):
 
     if market == "US":
         for receipient in receipients:
-            email_agent.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
-            email_agent.send_email(receipient, market + " candidates to SHORT", content_upper, 'html')
+           # email_agent.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
+            sm.send_mail(receipient, market + " candidates to LONG", content_lower)
+            #email_agent.send_email(receipient, market + " candidates to SHORT", content_upper, 'html')
+            sm.send_mail(receipient, market + " candidates to SHORT", content_upper)
     else:
         for receipient in receipients:
-            email_agent.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
+            #email_agent.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
+            sm.send_mail(receipient, market + " candidates to LONG", content_lower)
 
 def find_all_good_candidates(quote_ctx, market, file_name, start_day, end_day):
     ret, data_frame = quote_ctx.get_stock_basicinfo(market=market, stock_type='STOCK')
@@ -352,7 +354,7 @@ def get_stocks_dmi_my_signal(quote_ctx, stock_ids, market_snap_data):
 
 
 if __name__ == "__main__":
-    API_SVR_IP = '119.29.141.202'
+    API_SVR_IP = '127.0.0.1'
     API_SVR_PORT = 11111
     SP_500_URL = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
     DAO_URL = 'https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average'
@@ -367,10 +369,10 @@ if __name__ == "__main__":
 
     quote_ctx = OpenQuoteContext(host=API_SVR_IP, port=API_SVR_PORT)  # 创建行情api
 
-    generate_list(quote_ctx, "SH", "沪市备选.csv", 90, -90)
-    print("Done with SH market")
-    generate_list(quote_ctx, "SZ", "深市备选.csv", 90, -90)
-    print("Done with SZ market")
+    #generate_list(quote_ctx, "SH", "沪市备选.csv", 90, -90)
+    #print("Done with SH market")
+    #generate_list(quote_ctx, "SZ", "深市备选.csv", 90, -90)
+    #print("Done with SZ market")
     generate_list(quote_ctx, "HK", "香港备选.csv", 90, -90)
     print("Done with HK market")
     generate_list(quote_ctx, "US", "US_market_option_candidate", 100, -100)
@@ -384,4 +386,3 @@ if __name__ == "__main__":
     find_all_good_candidates(quote_ctx, 'HK', "good_candidates_to_research_HK.csv", "2017-07-27", "2018-07-27")
     """
     quote_ctx.close()
-
