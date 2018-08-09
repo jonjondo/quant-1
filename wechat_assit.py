@@ -94,6 +94,7 @@ def send_template_msg_with_hints(userid,stockname,stockid,price,operation,hits):
     '''
 
     client.message.send_template(userid,tmpid,data,None,None)
+    client.message.send_template('o48rB0tHYGOfpB9_eqInFV1OX3h0',tmpid,data,None,None)
 
 if __name__ == "__main__":
     client = WeChatClient('wx8e5ae8389bb42ffe', '772cba9ec8991bc97b145a240c9f48af')
