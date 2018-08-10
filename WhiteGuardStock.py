@@ -19,7 +19,7 @@ import pandas as pd
 import  math
 
 
-path="data/"
+path="/home/ubuntu/quant/quant/data/"
 
 class WhiteGuardStockCore:
     def __init__(self,dst_ip = '192.168.0.106',dst_port = 11111):
@@ -1156,7 +1156,7 @@ if __name__ == "__main__":
             sys.exit()
 
     wgs=WhiteGuardStockCore()
-    wgs.start_connect('118.89.22.76',11111)
+    wgs.start_connect('127.0.0.1',11111)
     #wgs.init_cn_stock("data/stocklist.csv")
     #wgs.loop_all_cn_stocks('futu',30,0)
     #wgs.init_hk_stock("data/HSIIndexList.csv")
