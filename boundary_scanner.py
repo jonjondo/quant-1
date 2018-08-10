@@ -10,7 +10,7 @@ import os
 sys.path.append(os.path.split(os.path.abspath(os.path.pardir))[0])
 ## from futuquant import *
 from futuquant import *
-import send_email as sm
+import sendmail as sm
 import tushare as ts
 import talib as ta
 import matplotlib
@@ -56,7 +56,7 @@ header = table.iloc[0]
 corrected_table = sliced_table.rename(columns=header)
 DAO_30 = corrected_table['Symbol'].tolist()
 
-receipients = ["wangpenghehe@qq.com"]
+receipients = ['wangpenghehe@qq.com','langzm@qq.com']
 
 
 class EmailNotification(object):
@@ -260,13 +260,13 @@ def generate_list(quote_ctx, market, file_name, upper, lower):
     if market == "US":
         for receipient in receipients:
            # email_agent.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
-            sm.send_mail(receipient, market + " candidates to LONG", content_lower)
+            sm.send_mail_to_me(receipient, market + " candidates to LONG", content_lower)
             #email_agent.send_email(receipient, market + " candidates to SHORT", content_upper, 'html')
-            sm.send_mail(receipient, market + " candidates to SHORT", content_upper)
+            sm.send_mail_to_me(receipient, market + " candidates to SHORT", content_upper)
     else:
         for receipient in receipients:
             #email_agent.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
-            sm.send_mail(receipient, market + " candidates to LONG", content_lower)
+            sm.send_mail_to_me(receipient, market + " candidates to LONG", content_lower)
 
 def find_all_good_candidates(quote_ctx, market, file_name, start_day, end_day):
     ret, data_frame = quote_ctx.get_stock_basicinfo(market=market, stock_type='STOCK')

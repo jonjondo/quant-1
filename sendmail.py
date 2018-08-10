@@ -68,6 +68,24 @@ def send_mail(to_list,sub,content):
         print(str(e)  )
         return False
         
+def send_mail_to_me(to_list,sub,content):
+    me="WGQuant Notification"+"<"+mail_user+"@"+mail_postfix+">"
+    msg = MIMEText(content,_subtype='html',_charset='utf-8')
+    msg['Subject'] = sub  
+    msg['From'] = me  
+    msg['To'] = ";".join(to_list)  
+    recieve = to_list
+    try:  
+        server = smtplib.SMTP_SSL()  
+        server.connect(mail_host)  
+        server.login(mail_user,mail_pass)  
+        server.sendmail(me, recieve, msg.as_string())  
+        server.close()  
+        return True  
+    except Exception as e:
+        print(str(e)  )
+        return False
+        
 
 def send_mail_withsub(sub,content):
     send_mail(mailto_list,sub,content)
