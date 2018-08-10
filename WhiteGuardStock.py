@@ -19,7 +19,7 @@ import pandas as pd
 import  math
 
 
-path="/home/ubuntu/quant/quant/data/"
+path="data/"
 
 class WhiteGuardStockCore:
     def __init__(self,dst_ip = '192.168.0.106',dst_port = 11111):
@@ -28,7 +28,7 @@ class WhiteGuardStockCore:
         # self.quote_ctx = OpenQuoteContext(self.api_ip, self.api_port)
         self.df_total = pd.DataFrame()
         self.smgr = StockUserMgr()
-        self.testmode = False 
+        self.testmode = True
     def start_connect(self,dst_ip,dst_port):
         self.quote_ctx = OpenQuoteContext(dst_ip, dst_port)
 
@@ -264,9 +264,12 @@ class WhiteGuardStockCore:
                     #最新的AAJ小于0，且大于低谷，并且低谷就是近一段时间的最低值，确认反转
                     if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and (math.isclose(df.iat[-2,-1], minaaj) or math.isclose(df.iat[-3,-1] , minaaj)): #-20拍脑袋的
                     #if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #从-45改成0
-                        info.loc[(info.code == EachStockID),'DMI2']=1
-                        print("%s %s[DMI2底部反转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
-
+                        if df['close'].values[-1] > df['high'].values[-2]:
+                            info.loc[(info.code == EachStockID),'DMI2']=1
+                            print("%s  %s %s[DMI2数值]"%(EachStockID,df['close'].values[-1] , df['high'].values[-2]))
+                            print("%s %s[DMI2底部反转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
+                        else:
+                            print("%s %s[DMI2底部反转但价格不符"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
                     elif  df.iat[-2,-1] > df.iat[-1,-1] and df.iat[-2,-1] == maxaaj: #去掉大于0的条件
                         info.loc[(info.code == EachStockID),'DMI2']= -1
                         print("%s %s[DMI2顶部反转]"%(EachStockID,info[(info.code == EachStockID)].stock_name.tolist()[0]))
@@ -484,8 +487,12 @@ class WhiteGuardStockCore:
             #最新的AAJ小于0，且大于低谷，并且低谷就是近一段时间的最低值，确认反转
             if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and (math.isclose(df.iat[-2,-1], minaaj) or math.isclose(df.iat[-3,-1] , minaaj)): #-20拍脑袋的
             #if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #从-45改成0
-                self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'DMI2']=1
-                print("%s[DMI2底部反转]"%(stock_data['code'].tolist()[0]))
+                if df['close'].values[-1] > df['high'].values[-2]:
+                    #print("%s  %s %s[DMI2数值]"%(stock_data['code'].tolist()[0],df['close'].values[-1] , df['high'].values[-2]))
+                    self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'DMI2']=1
+                    print("%s[DMI2底部反转]"%(stock_data['code'].tolist()[0]))
+                else:
+                    print("%s[DMI2底部反转但价格不符]"%(stock_data['code'].tolist()[0]))
 
             elif  df.iat[-2,-1] > df.iat[-1,-1] and df.iat[-2,-1] == maxaaj: #去掉大于0的条件
                 self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'DMI2']= -1
@@ -1139,7 +1146,7 @@ if __name__ == "__main__":
     #loop_all_hk_stocks_from_file("HSIIndexList.csv",60)
     #wgs=WhiteGuardStockCore()
     #wgs=WhiteGuardStockCore('119.29.141.202',11111)
-    market = 1
+    market = 0
     opts, args = getopt.getopt(sys.argv[1:], "hm:")
     for op, value in opts:
         if op == "-m":
@@ -1149,7 +1156,7 @@ if __name__ == "__main__":
             sys.exit()
 
     wgs=WhiteGuardStockCore()
-    wgs.start_connect('127.0.0.1',11111)
+    wgs.start_connect('118.89.22.76',11111)
     #wgs.init_cn_stock("data/stocklist.csv")
     #wgs.loop_all_cn_stocks('futu',30,0)
     #wgs.init_hk_stock("data/HSIIndexList.csv")
