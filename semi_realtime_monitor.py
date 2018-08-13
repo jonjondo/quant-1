@@ -142,7 +142,7 @@ def my_monitor(quote_ctx, mgr):
     market_is_open = False
     #TODO： 冬令时和夏令时，而且应该用UTC时间，考虑到加村和中国刚好相反
     Chinese_market_open = time(9, 30)
-    Chinese_market_close = time(22, 0)
+    Chinese_market_close = time(16, 0)
 
     US_market_open = time(21, 30)
     US_market_close = time(4, 0)
@@ -226,7 +226,7 @@ def my_monitor(quote_ctx, mgr):
         # elif curr_aaj > prev_aaj:
         # decision = "BUY"
             print("处理%s %s 完成"%(stock,descision))
-        #mgr.search_stockrecord_by_stockcode_semi_rt(stock,descision, op)
+        mgr.search_stockrecord_by_stockcode_semi_rt(stock,descision, op)
         except:
             print("处理%s %s 失败，数据可能为空"%(stock,descision))
             continue
