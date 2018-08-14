@@ -28,7 +28,7 @@ class WhiteGuardStockCore:
         # self.quote_ctx = OpenQuoteContext(self.api_ip, self.api_port)
         self.df_total = pd.DataFrame()
         self.smgr = StockUserMgr()
-        self.testmode = True
+        self.testmode = False 
     def start_connect(self,dst_ip,dst_port):
         self.quote_ctx = OpenQuoteContext(dst_ip, dst_port)
 
