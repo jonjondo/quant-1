@@ -369,13 +369,13 @@ if __name__ == "__main__":
 
     quote_ctx = OpenQuoteContext(host=API_SVR_IP, port=API_SVR_PORT)  # 创建行情api
 
-    #generate_list(quote_ctx, "SH", "沪市备选.csv", 90, -90)
-    #print("Done with SH market")
-    #generate_list(quote_ctx, "SZ", "深市备选.csv", 90, -90)
-    #print("Done with SZ market")
-    generate_list(quote_ctx, "HK", "香港备选.csv", 90, -90)
+    generate_list(quote_ctx, "SH", "data/tempfile/CN_SH_boundary.csv", 95, -95)
+    print("Done with SH market")
+    generate_list(quote_ctx, "SZ", "data/tempfile/CN_SZ_boundary.csv", 95, -95)
+    print("Done with SZ market")
+    generate_list(quote_ctx, "HK", "data/tempfile/HK_boundary.csv", 95, -95)
     print("Done with HK market")
-    generate_list(quote_ctx, "US", "US_market_option_candidate", 100, -100)
+    generate_list(quote_ctx, "US", "data/tempfile/US_market_option_candidate", 100, -100)
     print("Done with US market")
 
     """
