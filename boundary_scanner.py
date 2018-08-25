@@ -11,30 +11,11 @@ sys.path.append(os.path.split(os.path.abspath(os.path.pardir))[0])
 ## from futuquant import *
 from futuquant import *
 import sendmail as sm
-import tushare as ts
 import talib as ta
-import matplotlib
-import matplotlib.pyplot as plt
-import datetime
-import numpy as np
-import pandas as pb
-import matplotlib.dates as mdate
-
 import smtplib
-from email.mime.text import MIMEText
 from email.header import Header
-
-import numpy
-import chardet
-import csv
-import sqlite3
-
 from datetime import datetime, timedelta, time
-from time import gmtime, strftime
-import time as t
-from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
 
 path="/home/ubuntu/quant/quant/data/"
 
