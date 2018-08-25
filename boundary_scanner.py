@@ -35,6 +35,9 @@ import time as t
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+
+path="/home/ubuntu/quant/quant/data/"
+
 bio_techs = "NKTR,ALKS,EXEL,CTLT,FGEN,AMRX,RDY,GMED,IMMU,ARRY,MDCO,HZNP,HRTX,IRWD,FOLD,AERI,ASND,SUPN,EBS,NUVA,PTLA,BPMC,ENDP,WMGI,HALO,CLVS,MNTA,SPPI,GBT,AKRX,XNCR,RGEN,CNMD,AXGN,CBM,ZGNX,ACAD,XLRN,TSRO,ARNA,MRTX,PBYI,XON,INSM,PBH,MNK,NXTM,PTCT,NVRO,AIMT,PCRX,DPLO,ARWR,CORT,IMGN,SGMO,LXRX,TBPH,ALDR,CHRS,ITCI,QURE,RDUS,CSII,ACOR,ESPR,RTRX,CRY,OFIX,BABY,ECYT,VNDA,OMER,RVNC,ASMB,KPTI,XENT,ADAP,FLXN,EPZM,VRAY,KTWO,TGTX,LJPC,MGNX,DVAX,ANIP,AMPH,CDXS,PETS,ADMS,DRNA,VKTX,COLL,CBAY,ABUS,CCXI,GLYC,AKBA,CARA,PRTA,ANIK,IVC,CUTR,FPRX,DEPO,FATE,LCI,STML,COOL,KIN,VCEL,DERM,MNOV,ZFGN,CNCE,VTL,PRTK,BSTC,MCRB,NERV,BLFS,NSTG,GLMD,IRMD,XOMA,SPNE,XENE,FONR,NATR,MSON,JNP,CBIO,CSBR,NAII"
 bio_techs3 = "NAII"
 
@@ -241,8 +244,8 @@ def generate_list(quote_ctx, market, file_name, upper, lower):
 
     df_to_write_lower = pd.DataFrame(data_lower)
     df_to_write_sorted_lower = df_to_write_lower.sort_values('volume', ascending=False)
-    df_to_write_sorted_lower.to_csv(file_name + "_short.csv", index=True, sep=' ', columns=['ticker', 'name', 'value', 'volume'])
-    df_to_write_sorted_lower.to_html(file_name + ".html")
+    df_to_write_sorted_lower.to_csv(os.path.join(path,file_name)+ "_short.csv", index=True, sep=' ', columns=['ticker', 'name', 'value', 'volume'])
+    df_to_write_sorted_lower.to_html(os.path.join(path,file_name) + ".html")
     print(df_to_write_sorted_lower)
     content_lower = df_to_write_sorted_lower.to_html()
 
@@ -252,9 +255,9 @@ def generate_list(quote_ctx, market, file_name, upper, lower):
         data_upper = {'ticker': tickers_upper, 'name': names_upper, 'value': values_upper, 'volume': volumes_upper}
     df_to_write_upper = pd.DataFrame(data_upper)
     df_to_write_sorted_upper = df_to_write_upper.sort_values('volume', ascending=False)
-    df_to_write_sorted_upper.to_csv(file_name + "_short.csv", index=True, sep=' ',
+    df_to_write_sorted_upper.to_csv(os.path.join(path,file_name) + "_short.csv", index=True, sep=' ',
                                     columns=['ticker', 'name', 'value', 'volume'])
-    df_to_write_sorted_upper.to_html(file_name + ".html")
+    df_to_write_sorted_upper.to_html(os.path.join(path,file_name) + ".html")
     content_upper = df_to_write_sorted_upper.to_html()
 
     if market == "US":
@@ -283,7 +286,7 @@ def find_all_good_candidates(quote_ctx, market, file_name, start_day, end_day):
             names.append(row['name'])
     data = {'ticker': tickers, 'name': names}
     df_to_write = pd.DataFrame(data)
-    df_to_write.to_csv(file_name, index=True, sep=' ', columns=['ticker', 'name'])
+    df_to_write.to_csv(os.path.join(path,file_name), index=True, sep=' ', columns=['ticker', 'name'])
 
 def process_single_df(dfret, market_snap_data):
     N, MM = 14, 6
@@ -354,7 +357,7 @@ def get_stocks_dmi_my_signal(quote_ctx, stock_ids, market_snap_data):
 
 
 if __name__ == "__main__":
-    API_SVR_IP = '127.0.0.1'
+    API_SVR_IP = '118.89.22.76'
     API_SVR_PORT = 11111
     SP_500_URL = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
     DAO_URL = 'https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average'
@@ -369,13 +372,13 @@ if __name__ == "__main__":
 
     quote_ctx = OpenQuoteContext(host=API_SVR_IP, port=API_SVR_PORT)  # 创建行情api
 
-    generate_list(quote_ctx, "SH", "data/tempfile/CN_SH_boundary.csv", 95, -95)
+    generate_list(quote_ctx, "SH", "CN_SH_boundary.csv", 95, -95)
     print("Done with SH market")
-    generate_list(quote_ctx, "SZ", "data/tempfile/CN_SZ_boundary.csv", 95, -95)
+    generate_list(quote_ctx, "SZ", "CN_SZ_boundary.csv", 95, -95)
     print("Done with SZ market")
-    generate_list(quote_ctx, "HK", "data/tempfile/HK_boundary.csv", 95, -95)
+    generate_list(quote_ctx, "HK", "HK_boundary.csv", 95, -95)
     print("Done with HK market")
-    generate_list(quote_ctx, "US", "data/tempfile/US_market_option_candidate", 100, -100)
+    generate_list(quote_ctx, "US", "US_market_option_candidate", 100, -100)
     print("Done with US market")
 
     """
