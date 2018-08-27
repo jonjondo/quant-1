@@ -226,7 +226,7 @@ def my_monitor(quote_ctx, mgr):
         # elif curr_aaj > prev_aaj:
         # decision = "BUY"
             print("处理%s %s 完成"%(stock,descision))
-        mgr.search_stockrecord_by_stockcode_semi_rt(stock,descision, op)
+            mgr.search_stockrecord_by_stockcode_semi_rt(stock,descision, op)
         except:
             print("处理%s %s 失败，数据可能为空"%(stock,descision))
             continue
