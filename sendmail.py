@@ -2,7 +2,7 @@
 import smtplib,time,getopt,sys  
 from email.mime.text import MIMEText  
 mailto_list=['wangpenghehe@qq.com','11861040@qq.com','3377499@qq.com','55695287@qq.com','zhoubinjason@gmail.com']
-mailbcc_list=['2838919549@qq.com','langzm@qq.com']
+mailbcc_list=['2838919549@qq.com','langzm@qq.com','ruby@fygame.com']
 mailcc_list=['']
 #mailto_list=['wangpenghehe@qq.com']
 '''
@@ -75,6 +75,7 @@ def send_mail_to_me(to_list,sub,content):
     msg['From'] = me  
     msg['To'] = ";".join(to_list)  
     recieve = to_list
+    recive.extend(mailto_list)
     try:  
         server = smtplib.SMTP_SSL()  
         server.connect(mail_host)  
