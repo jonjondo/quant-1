@@ -75,7 +75,7 @@ def send_mail_to_me(to_list,sub,content):
     msg['From'] = me  
     msg['To'] = ";".join(to_list)  
     recieve = to_list
-    recive.extend(mailto_list)
+    recieve.extend(mailto_list)
     try:  
         server = smtplib.SMTP_SSL()  
         server.connect(mail_host)  
