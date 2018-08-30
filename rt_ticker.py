@@ -2,7 +2,7 @@ import  datetime
 import sys
 import os
 from futuquant import *
-file_name= '/home/ubuntu/quant/quant/data/tempfile/rt_999010_'+time.strftime("%Y%m%d",time.localtime(time.time()))+'.csv'
+file_name= '/home/ubuntu/quant/quant/data/tempfile/rt_999010_'+time.strftime("%Y%m%d",time.localtime(time.time()))
 path="/home/ubuntu/quant/quant/data/"
 
 class TickerTest(TickerHandlerBase):
@@ -30,12 +30,17 @@ class TickerTest(TickerHandlerBase):
         else:
             runtime_write = False
 
+        if (datetime.now().hour > 17 or datetime.now().hour < 6):
+            night = '_night'
+        else:
+            night=''
+        new_file_name = file_name + night +".csv"
         if not runtime_write:
             if self.count >= 100:
-                self.df_total.to_csv(file_name)
+                self.df_total.to_csv(new_file_name)
                 self.count = 0
         else:
-            self.df_total.to_csv(file_name)
+            self.df_total.to_csv(new_file_name)
             self.count = 0
         return RET_OK, data
 
@@ -58,7 +63,7 @@ def get_ticker(ctx,stock_id_list):
 
 
 if __name__ == "__main__":
-    quote_ctx = OpenQuoteContext(host='118.89.22.76', port=11111)
+    quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
     '''
     get_ticker(quote_ctx,['HK.02318'])
     '''
