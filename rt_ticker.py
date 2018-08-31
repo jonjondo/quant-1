@@ -2,8 +2,8 @@ import  datetime
 import sys
 import os
 from futuquant import *
-file_name= '/home/ubuntu/quant/quant/data/tempfile/rt_999010_'+time.strftime("%Y%m%d",time.localtime(time.time()))
-path="/home/ubuntu/quant/quant/data/"
+file_name= '/home/ubuntu/quant/quant/data/tempfile/rtdata/rt_999010_'+time.strftime("%Y%m%d",time.localtime(time.time()))
+path="/home/ubuntu/quant/quant/data/tempfile/rtdata/"
 
 class TickerTest(TickerHandlerBase):
     def __init__(self):
@@ -58,7 +58,7 @@ def get_ticker(ctx,stock_id_list):
 
     for id in stock_id_list:
         ret,df=quote_ctx.get_rt_ticker(id, 1000)
-        df.to_csv(os.path.join(path,"tempfile/rt_"+ id +".csv"), index=True, sep=',')
+        df.to_csv(os.path.join(path,"rt_"+ id +".csv"), index=True, sep=',')
     quote_ctx.close()
 
 
