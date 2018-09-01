@@ -72,7 +72,7 @@ class CalculateHills:
                     #plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(5000))
                     for index,row in self.df_total.iterrows():
                         value = row['hill']
-
+                        #颜色代码可以换
                         percent = row['basic']
                         if percent > 0:
                             color = 'red'
