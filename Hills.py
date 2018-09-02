@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.dates as mdate
 from futuquant import *
-path="/home/ubuntu/quant/quant/data/"
-#path="data/"
+#path="/home/ubuntu/quant/quant/data/"
+path="data/"
 
 
 
@@ -65,6 +65,7 @@ class CalculateHills:
                     plt.plot(df.index,df['close'] ,label='close')
                     plt.xlabel("Trading Cycle")
                     plt.ylabel("Price ")
+                    plt.xlim((0, len(df.index)))
                     plt.title('%s Patron'%stock_id)
                     #plt.gca().xaxis.set_major_formatter(mdate.DateFormatter('%Y/%m/%d %HH%MM%SS'))
                     #plt.gca().xaxis.set_major_locator(mdate.DayLocator())
@@ -75,13 +76,13 @@ class CalculateHills:
                         #颜色代码可以换
                         percent = row['basic']
                         if percent > 0:
-                            color = 'red'
+                            color = "#3383ba"
                             alpha=abs(percent)/self.df_total['basic'][0]
                         elif percent == 0:
-                            color = 'blue'
+                            color = "#eb8a35"
                             alpha = 1
                         else:
-                            color = 'green'
+                            color = "#51b151"
                             alpha=abs(percent-100)/self.df_total['basic'][0]
                         plt.plot(df.index,[value]*len(df.index),alpha=alpha,color=color)
                         #print(self.df_total.loc[(self.df_total['hill'] == value),'basic'])
@@ -93,7 +94,7 @@ class CalculateHills:
                     #plt.plot(df)
                     #plt.grid()
                     #记得加这一句，不然不会显示图像
-                    plt.savefig(os.path.join(path,stock_id+"Patron.jpg"))
+                    plt.savefig(os.path.join(path,stock_id+"Patron.png"))
                     #plt.show()
 
 
