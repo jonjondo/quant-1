@@ -6,10 +6,11 @@ import time
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.dates as mdate
 from futuquant import *
-#path="/home/ubuntu/quant/quant/data/"
-path="data/"
+path="/home/ubuntu/quant/quant/data/"
+#path="data/"
 
 
 
