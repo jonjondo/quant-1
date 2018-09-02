@@ -4,9 +4,10 @@ import sys
 import os
 import time
 from matplotlib.lines import Line2D
-import matplotlib.pyplot as plt
+
 import matplotlib
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import matplotlib.dates as mdate
 from futuquant import *
 path="/home/ubuntu/quant/quant/data/"
