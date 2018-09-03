@@ -19,7 +19,7 @@ class CalculateHills:
     def __init__(self):
         pd.set_option('precision', 2)
         #self.df_total = pd.DataFrame({'basic':[238.2,200,161.8,150,138.2,100,76.4,61.8,50,38.2,23.6,0,-138.2,-150,-161.8,-200,-238.2]})
-        self.df_total = pd.DataFrame({'basic':[161.8,150,138.2,100,76.4,61.8,50,38.2,23.6,0,-138.2,-150,-161.8]})
+        self.df_total = pd.DataFrame({'basic':[261.8,250,238.2,200,161.8,150,138.2,100,61.8,50,38.2,23.6,0,-23.6,-38.2,-50,-61.8,-100,-138.2,-150,-161.8,-200,-238,2,-250,-261.8]})
         self.testmode = False
     def start_connect(self,dst_ip,dst_port):
         self.quote_ctx = OpenQuoteContext(dst_ip, dst_port)
@@ -114,7 +114,7 @@ class CalculateHills:
 if __name__ == "__main__":
     calhill=CalculateHills()
     calhill.start_connect('118.89.22.76',11111)
-    calhill.get_stock_hill(['HK.800000','HK.00700','HK.02318'])
+    calhill.get_stock_hill(['HK.999010','HK.800000','HK.00700','HK.02318'])
     '''
     get_ticker(quote_ctx,['HK.02318'])
     '''
