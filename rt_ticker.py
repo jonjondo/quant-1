@@ -2,7 +2,7 @@ import  datetime
 import sys
 import os
 from futuquant import *
-file_name= '/home/ubuntu/quant/quant/data/tempfile/rtdata/rt_999010_'+time.strftime("%Y%m%d",time.localtime(time.time()))
+file_name= '/home/ubuntu/quant/quant/data/tempfile/rtdata/rt_'+time.strftime("%Y%m%d",time.localtime(time.time()))
 path="/home/ubuntu/quant/quant/data/tempfile/rtdata/"
 
 class TickerTest(TickerHandlerBase):
@@ -35,6 +35,16 @@ class TickerTest(TickerHandlerBase):
         else:
             night=''
         new_file_name = file_name + night +".csv"
+        
+        
+        #如果是收盘时间要退出一下
+        if (datetime.now().hour == 16 and datetime.now().minute >= 31) or (datetime.now().hour == 1 and datetime.now().minute >= 1):
+            self.df_total.to_csv(new_file_name)
+            print("Daily Market Close")
+            exit("Daily Market Close")
+        
+        
+
         if not runtime_write:
             if self.count >= 100:
                 self.df_total.to_csv(new_file_name)
