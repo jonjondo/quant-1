@@ -50,7 +50,7 @@ class TickerTest(TickerHandlerBase):
         
 
         if not runtime_write:
-            if self.count >= 10:
+            if self.count >= 50:
                 self.df_total.to_csv(new_file_name)
                 self.count = 0
         else:
