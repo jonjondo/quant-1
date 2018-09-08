@@ -242,15 +242,15 @@ def generate_list(quote_ctx, market, file_name, upper, lower):
     content_upper = df_to_write_sorted_upper.to_html()
 
     if market == "US":
-        for receipient in receipients:
+        #for receipient in receipients:
            # email_agent.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
-            sm.send_mail_to_me(receipient, market + " candidates to LONG", content_lower)
+        sm.send_mail_to_me(receipients, market + " candidates to LONG", content_lower)
             #email_agent.send_email(receipient, market + " candidates to SHORT", content_upper, 'html')
-            sm.send_mail_to_me(receipient, market + " candidates to SHORT", content_upper)
+        sm.send_mail_to_me(receipients, market + " candidates to SHORT", content_upper)
     else:
-        for receipient in receipients:
+        #for receipient in receipients:
             #email_agent.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
-            sm.send_mail_to_me(receipient, market + " candidates to LONG", content_lower)
+        sm.send_mail_to_me(receipients, market + " candidates to LONG", content_lower)
 
 def find_all_good_candidates(quote_ctx, market, file_name, start_day, end_day):
     ret, data_frame = quote_ctx.get_stock_basicinfo(market=market, stock_type='STOCK')
