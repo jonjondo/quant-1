@@ -146,7 +146,7 @@ def merge_canslim_c_result():
     df['business_income_good'].astype('float')
     df['cashflowratio_good'].astype('float')
     #在这里计算PEG市盈率相对盈利增长比率
-    df['peg'] = df['pe']/df['nprg_2017q4']
+    df['peg'] = df['pe']/df['nprg_2018q2']
     decimals = pb.Series([2], index=['peg'])
     df.round(decimals)
     df = df.fillna(0)
