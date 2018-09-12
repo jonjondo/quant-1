@@ -13,7 +13,7 @@ def hello_world():
 def viewdmi2(stock):
     if "US" in stock or "SH" in stock or "SZ" in stock or "HK" in stock:
         wgs=WhiteGuardStockCore()
-        wgs.start_connect('127.0.0.1',11111)
+        wgs.start_connect('118.89.22.76',11111)
         wgs.get_stock_dmi_my_signal(stock,'2018-1-1',time.strftime("%Y-%m-%d",time.localtime(time.time())))
 
         wgs.clear_quote()
