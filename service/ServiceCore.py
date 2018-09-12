@@ -735,6 +735,7 @@ class WhiteGuardStockCore:
             plt.plot(dfret.index,dfret['PDI'] ,label='PDI',color="#3383ba")
             plt.plot(dfret.index,dfret['MDI'] ,label='MDI',color="#eb8a35")
             plt.plot(dfret.index,dfret['AAJ'] ,label='AAJ',color="#51b151")
+            plt.plot(dfret.index,[0]*len(dfret.index),color="blue")
             plt.ylim((-110, 110))
             plt.xlabel("Trading Cycle")
             plt.ylabel("Fluctuation Ratio")
