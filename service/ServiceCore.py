@@ -1,6 +1,8 @@
 __author__ = 'wangpeng'
 import tushare as ts
 import talib as ta
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from futuquant import *
 import datetime
