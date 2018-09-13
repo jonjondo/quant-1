@@ -11,6 +11,7 @@ def hello_world():
 
 @app.route('/viewdmi2/<stock>')
 def viewdmi2(stock):
+    stock = stock.upper()
     if "US" in stock or "SH" in stock or "SZ" in stock or "HK" in stock:
         wgs=WhiteGuardStockCore()
         wgs.start_connect('118.89.22.76',11111)
