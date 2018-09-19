@@ -40,7 +40,7 @@ header = table.iloc[0]
 corrected_table = sliced_table.rename(columns=header)
 DAO_30 = corrected_table['Symbol'].tolist()
 
-receipients = ['wangpenghehe@qq.com','langzm@qq.com']
+receipients = ['wangpenghehe@qq.com','langzm@qq.com', '3377499@qq.com', '11861040@qq.com', '55695287@qq.com']
 
 
 class EmailNotification(object):
@@ -170,7 +170,7 @@ def get_stock_dmi_my_signal(quote_ctx, stock_id):
         dfret = pd.concat([dfret, df], axis=1)
     return df['AAJ'], ma20, dfret['volume']
 
-def generate_list(quote_ctx, market, file_name, upper, lower):
+def generate_list(quote_ctx, market, file_name, upper, lower, stock_list):
     ret, data_frame = quote_ctx.get_stock_basicinfo(market=market, stock_type='STOCK')
     df = data_frame[data_frame['name'].str.contains("退市|ST") == False]
     print(df)
@@ -179,78 +179,82 @@ def generate_list(quote_ctx, market, file_name, upper, lower):
     names_lower = []
     values_lower = []
     volumes_lower = []
-    options_lower = []
+    turn_over_rate_lower = []
     tickers_upper = []
     names_upper = []
     values_upper = []
     volumes_upper = []
-    options_upper = []
+    turn_over_rate_upper = []
+    n = 0
+    average_volume_days = 14
     for index, row in df.iterrows():
         try:
-            aajs, ma20s, ret_volumes = get_stock_dmi_my_signal(quote_ctx, row['code'])
+            aajs, ma20s, ret_volumes, closes, opens, turnovers = get_stock_dmi_my_signal(quote_ctx, row['code'])
             last = aajs.values[-1]
             volume = int(ret_volumes.values[-1])
-            if volume < 10000:
+            # volumes = ret_volumes.values[-average_volume_days:]
+            # average_volume = sum(volumes) / average_volume_days
+
+            if volume < 1000:
+                continue
+
+            if turnovers.values[-1] == 0.0:
+                continue
+
+            if market == "US" and closes.values[-1] < 10:
                 continue
             value_to_be_added = ""
             if last > upper and market != "SZ" and market != "SH":
                 print(str(row['code']) + " " + str(row['name']) + " " + str(upper))
                 value_to_be_added = "> " + str(upper)
-                option_choice = "Short Call or Long Put"
                 tickers_upper.append(row['code'])
                 names_upper.append(row['name'])
                 values_upper.append(value_to_be_added)
                 volumes_upper.append(volume)
-                if market != "SZ" and market != "SH":
-                    options_upper.append(option_choice)
+                turn_over_rate_upper.append(turnovers.values[-1])
+                n += 1
             elif last < lower:
                 print(str(row['code']) + " " + str(row['name']) + " " + str(lower))
                 value_to_be_added = "< " + str(lower)
-                option_choice = "Long Call or Short Put"
                 tickers_lower.append(row['code'])
                 names_lower.append(row['name'])
                 values_lower.append(value_to_be_added)
                 volumes_lower.append(volume)
-                if market != "SZ" and market != "SH":
-                    options_lower.append(option_choice)
+                turn_over_rate_lower.append(turnovers.values[-1])
+                n += 1
+
         except:
             print("Ticker " + str(row['code']) + " " + str(row['name']) + " has a problem")
+        # if n > 0:
+        #    break
 
 
     email_agent = EmailNotification()
-    if market != "SZ" and market != "SH":
-        data_lower = {'ticker': tickers_lower, 'name': names_lower, 'value': values_lower, 'volume' : volumes_lower, "option" : options_lower }
-    else:
-        data_lower = {'ticker': tickers_lower, 'name': names_lower, 'value': values_lower, 'volume': volumes_lower }
+
+    data_lower = {'ticker': tickers_lower, 'name': names_lower, 'value': values_lower, 'volume' : volumes_lower, 'turnover rate' : turn_over_rate_lower}
 
     df_to_write_lower = pd.DataFrame(data_lower)
-    df_to_write_sorted_lower = df_to_write_lower.sort_values('volume', ascending=False)
-    df_to_write_sorted_lower.to_csv(os.path.join(path,file_name)+ "_short.csv", index=True, sep=' ', columns=['ticker', 'name', 'value', 'volume'])
-    df_to_write_sorted_lower.to_html(os.path.join(path,file_name) + ".html")
+    df_to_write_sorted_lower = df_to_write_lower.sort_values('turnover rate', ascending=False)
+    df_to_write_sorted_lower.to_csv(file_name + "_short.csv", index=True, sep=' ', columns=['ticker', 'name', 'value', 'volume', 'turnover rate'])
+    df_to_write_sorted_lower.to_html(file_name + ".html")
     print(df_to_write_sorted_lower)
     content_lower = df_to_write_sorted_lower.to_html()
+    data_upper = {'ticker': tickers_upper, 'name': names_upper, 'value': values_upper, 'volume': volumes_upper, 'turnover rate' : turn_over_rate_upper}
 
-    if market != "SZ" and market != "SH":
-        data_upper = {'ticker': tickers_upper, 'name': names_upper, 'value': values_upper, 'volume': volumes_upper, "option": options_upper}
-    else:
-        data_upper = {'ticker': tickers_upper, 'name': names_upper, 'value': values_upper, 'volume': volumes_upper}
     df_to_write_upper = pd.DataFrame(data_upper)
-    df_to_write_sorted_upper = df_to_write_upper.sort_values('volume', ascending=False)
-    df_to_write_sorted_upper.to_csv(os.path.join(path,file_name) + "_short.csv", index=True, sep=' ',
-                                    columns=['ticker', 'name', 'value', 'volume'])
-    df_to_write_sorted_upper.to_html(os.path.join(path,file_name) + ".html")
+    df_to_write_sorted_upper = df_to_write_upper.sort_values('turnover rate', ascending=False)
+    df_to_write_sorted_upper.to_csv(file_name + "_short.csv", index=True, sep=' ',
+                                    columns=['ticker', 'name', 'value', 'volume', 'turnover rate'])
+    df_to_write_sorted_upper.to_html(file_name + ".html")
     content_upper = df_to_write_sorted_upper.to_html()
 
     if market == "US":
-        #for receipient in receipients:
-           # email_agent.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
-        sm.send_mail_to_me(receipients, market + " candidates to LONG", content_lower)
-            #email_agent.send_email(receipient, market + " candidates to SHORT", content_upper, 'html')
-        sm.send_mail_to_me(receipients, market + " candidates to SHORT", content_upper)
+        for receipient in receipients:
+            email_agent.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
+            email_agent.send_email(receipient, market + " candidates to SHORT", content_upper, 'html')
     else:
-        #for receipient in receipients:
-            #email_agent.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
-        sm.send_mail_to_me(receipients, market + " candidates to LONG", content_lower)
+        for receipient in receipients:
+            email_agent.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
 
 def find_all_good_candidates(quote_ctx, market, file_name, start_day, end_day):
     ret, data_frame = quote_ctx.get_stock_basicinfo(market=market, stock_type='STOCK')
@@ -353,13 +357,13 @@ if __name__ == "__main__":
 
     quote_ctx = OpenQuoteContext(host=API_SVR_IP, port=API_SVR_PORT)  # 创建行情api
 
-    generate_list(quote_ctx, "SH", "CN_SH_boundary.csv", 95, -95)
+    generate_list(quote_ctx, "SH", "CN_SH_boundary.csv", 90, -90)
     print("Done with SH market")
-    generate_list(quote_ctx, "SZ", "CN_SZ_boundary.csv", 95, -95)
+    generate_list(quote_ctx, "SZ", "CN_SZ_boundary.csv", 90, -90)
     print("Done with SZ market")
-    generate_list(quote_ctx, "HK", "HK_boundary.csv", 95, -95)
+    generate_list(quote_ctx, "HK", "HK_boundary.csv", 90, -90)
     print("Done with HK market")
-    generate_list(quote_ctx, "US", "US_market_option_candidate", 100, -100)
+    generate_list(quote_ctx, "US", "US_market_option_candidate", 90, -90)
     print("Done with US market")
 
     """
