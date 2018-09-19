@@ -170,7 +170,7 @@ def get_stock_dmi_my_signal(quote_ctx, stock_id):
         dfret = pd.concat([dfret, df], axis=1)
     return df['AAJ'], ma20, dfret['volume']
 
-def generate_list(quote_ctx, market, file_name, upper, lower, stock_list):
+def generate_list(quote_ctx, market, file_name, upper, lower):
     ret, data_frame = quote_ctx.get_stock_basicinfo(market=market, stock_type='STOCK')
     df = data_frame[data_frame['name'].str.contains("退市|ST") == False]
     print(df)
@@ -250,11 +250,11 @@ def generate_list(quote_ctx, market, file_name, upper, lower, stock_list):
 
     if market == "US":
         for receipient in receipients:
-            email_agent.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
-            email_agent.send_email(receipient, market + " candidates to SHORT", content_upper, 'html')
+            sm.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
+            sm.send_email(receipient, market + " candidates to SHORT", content_upper, 'html')
     else:
         for receipient in receipients:
-            email_agent.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
+            sm.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
 
 def find_all_good_candidates(quote_ctx, market, file_name, start_day, end_day):
     ret, data_frame = quote_ctx.get_stock_basicinfo(market=market, stock_type='STOCK')
