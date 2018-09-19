@@ -115,6 +115,6 @@ if __name__ == "__main__":
     '''
     handler = TickerTest()
     rt.quote_ctx.set_handler(handler)
-    rt.quote_ctx.subscribe(['HK.999010','HK.999011','HK.02318'], [SubType.TICKER])
+    rt.quote_ctx.subscribe(['HK.999010','HK.999011','HK.00700'], [SubType.TICKER])
     rt.quote_ctx.start()
     #time.sleep(15)
