@@ -1,5 +1,6 @@
 from flask import Flask
 from ServiceCore import  *
+from flask import render_template
 import time
 app = Flask(__name__)
 
@@ -21,6 +22,14 @@ def viewdmi2(stock):
         return '<img src=../static/' + stock + '.png +><img>'
     else:
         return  '不认识这个代码'
+@app.route('/hsi/')
+def hsi():
+    with open('hsi.txt', 'r') as f2:
+        strContent = f2.read()
+        buy = strContent.split(',')[0]
+        sell = strContent.split(',')[1]
+    return render_template("hsi.html",buy=buy,sell=sell)
+
 if __name__ == '__main__':
     app.run(
         host = '0.0.0.0',
