@@ -28,7 +28,7 @@ def hsi():
         strContent = f2.read()
         buy = strContent.split(',')[0]
         sell = strContent.split(',')[1]
-    return render_template("hsi.html",buy=buy,sell=sell)
+    return render_template("hsi.html",date= time.strftime("%Y-%m-%d",time.localtime(time.time())),buy=buy,sell=sell)
 
 if __name__ == '__main__':
     app.run(

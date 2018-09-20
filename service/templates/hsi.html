@@ -2,21 +2,11 @@
           <meta http-equiv="refresh" content="15">
           <head>
             <title>期指即时交易查看</title>
-              <script type="text/javascript">
-                window.onload=function(){
-                setInterval(function(){
-                var date=new Date();
-                var year=date.getFullYear(); //获取当前年份
-                var mon=date.getMonth()+1; //获取当前月份
-                var da=date.getDate(); //获取当前日
-                var d=document.getElementById('Date');
-                d.innerHTML=year+'年'+mon+'月'+da+'日';  },1000)  }
-              </script>
           </head>
           <body>
-              <h1 align="center">即时数据</h1>
+              <h1 align="center">即时数据{{date}}</h1>
               <h4 align="center">(白天数据包括上一个夜市，夜间只显示当前夜期，每15s刷新一次)</h4>
-              <div id="Date" align="center"> </div>
+
               <table border="2" width="600" cellpadding="5" cellspacing="0" align="center">
                     <tr>
                         <td>买</td>
