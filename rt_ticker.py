@@ -40,7 +40,7 @@ class TickerTest(TickerHandlerBase):
         
         #如果是收盘时间要退出一下
         if (datetime.now().hour == 16 and datetime.now().minute >= 31) or (datetime.now().hour == 1 and datetime.now().minute >= 1):
-            self.df_total.to_csv(new_file_name,mode='a')
+            self.df_total.to_csv(new_file_name,mode='w')
             rt_copyfile(new_file_name,new_file_name+".bak")
             print("Daily Market Close")
             rt.clear_quote()
@@ -51,10 +51,10 @@ class TickerTest(TickerHandlerBase):
 
         if not runtime_write:
             if self.count >= 50:
-                self.df_total.to_csv(new_file_name,mode='a')
+                self.df_total.to_csv(new_file_name,mode='w')
                 self.count = 0
         else:
-            self.df_total.to_csv(new_file_name,mode='a')
+            self.df_total.to_csv(new_file_name,mode='w')
             self.count = 0
         return RET_OK, data
 
