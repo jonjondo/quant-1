@@ -1,4 +1,4 @@
-import  datetime
+from datetime import  datetime
 import sys
 import os,shutil
 from futuquant import *
@@ -10,6 +10,7 @@ path=path_prefix +"data/tempfile/rtdata/"
 class TickerTest(TickerHandlerBase):
     def __init__(self):
         self.df_total = pd.DataFrame()
+        self.df_total_final = pd.DataFrame()
         self.count = 0
         self.buy = 0
         self.sell = 0
@@ -42,7 +43,7 @@ class TickerTest(TickerHandlerBase):
 
         self.count = self.count + len(data.index)
         self.df_total=data
-        #TODO： 冬令时和夏令时，而且应该用UTC时间，
+        self.df_total_final = self.df_total_final.append(data)
 
 
 
@@ -60,18 +61,22 @@ class TickerTest(TickerHandlerBase):
         else:
             self.night=''
         new_file_name = file_name + self.night +".csv"
-        
+
+
         
         #如果是收盘时间要退出一下
         if (datetime.now().hour == 16 and datetime.now().minute >= 31) or (datetime.now().hour == 1 and datetime.now().minute >= 1):
             self.df_total.to_csv(new_file_name,mode='a')
+            self.df_total_final.to_csv(new_file_name+"_final.csv")
             rt_copyfile(new_file_name,new_file_name+".bak")
             print("Daily Market Close")
             rt.clear_quote()
             time.sleep(3)
             sys.exit(-1)
-        
-        
+
+        #半小时写一次总的文件
+        if (datetime.now().minute == 0 or datetime.now().minute == 30):
+            self.df_total_final.to_csv(new_file_name+"_final.csv")
 
         # if not runtime_write:
         #     if self.count >= 50:
@@ -91,7 +96,7 @@ class TickerTest(TickerHandlerBase):
         if len(self.df_total[(self.df_total['ticker_direction'] == 'SELL') & ( self.df_total['code']== 'HK_FUTURE.999010')].index) > 0:
             self.sell = self.sell + self.df_total[(self.df_total['ticker_direction'] == 'SELL') & ( self.df_total['code']== 'HK_FUTURE.999010')]['volume'].sum()
 
-        self.strcount = "本次--买:" + str(self.df_total[(self.df_total['ticker_direction'] == 'BUY') & ( self.df_total['code']== 'HK_FUTURE.999010')]['volume'].sum()) + "卖:" +str(self.df_total[(self.df_total['ticker_direction'] == 'SELL') &  (self.df_total['code']== 'HK_FUTURE.999010')]['volume'].sum())
+        self.strcount = "本次tick买:" + str(self.df_total[(self.df_total['ticker_direction'] == 'BUY') & ( self.df_total['code']== 'HK_FUTURE.999010')]['volume'].sum()) + "卖:" +str(self.df_total[(self.df_total['ticker_direction'] == 'SELL') &  (self.df_total['code']== 'HK_FUTURE.999010')]['volume'].sum())
         print(self.buy,self.sell,self.strcount)
         self.render_html()
         return RET_OK, data
@@ -144,7 +149,6 @@ def rt_copyfile(srcfile,dstfile):
 def get_ticker(ctx,stock_id_list):
     #quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
     ctx.subscribe(stock_id_list, [SubType.TICKER])
-
     for id in stock_id_list:
         ret,df=rt.quote_ctx.get_rt_ticker(id, 1000)
         df.to_csv(os.path.join(path,"rt_"+ id +".csv"), index=True, sep=',',mode='a')
