@@ -2,6 +2,7 @@ from flask import Flask
 from ServiceCore import  *
 from flask import render_template
 import time
+import pandas as pd
 app = Flask(__name__)
 
 
@@ -28,7 +29,23 @@ def hsi():
         strContent = f2.read()
         buy = strContent.split(',')[0]
         sell = strContent.split(',')[1]
-    return render_template("hsi.html",date= time.strftime("%Y-%m-%d",time.localtime(time.time())),buy=buy,sell=sell)
+    df = pd.read_csv('statistics.csv')
+
+    return render_template("hsi.html",date= time.strftime("%Y-%m-%d",time.localtime(time.time())),buy=buy,sell=sell,stats=df_to_html(df))
+
+def df_to_html(df):
+    html = (
+    df.style
+        .set_properties(**{'font-size': '12pt', 'font-family': 'Calibri','align':'center', 'border-style':'solid', 'border-width':'1px','border-color': 'gray','border-spacing':'0px'})
+    .set_caption("历史成交统计")
+    .set_table_styles(\
+    [{'selector': '.row_heading',\
+      'props': [('display', 'none')]},\
+     {'selector': '.blank.level0',\
+      'props': [('display', 'none')]}])
+    .render()
+     )
+    return html
 
 if __name__ == '__main__':
     app.run(

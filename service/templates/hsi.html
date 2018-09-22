@@ -4,10 +4,10 @@
             <title>期指即时交易查看</title>
           </head>
           <body>
-              <h1 align="center">即时数据{{date}}</h1>
-              <h4 align="center">(白天数据包括上一个夜市，夜间只显示当前夜期，每15s刷新一次)</h4>
+              <h2 align="center">即时数据{{date}}</h2>
+              <h5 align="center">(白天数据包括上一个夜市，夜间只显示当前夜期，每15s刷新一次)</h5>
 
-              <table border="2" width="600" cellpadding="5" cellspacing="0" align="center">
+              <table border="2" width="300" cellpadding="5" cellspacing="0" align="center">
                     <tr>
                         <td>买</td>
                         <td><font color="red">{{buy}}</font></td>
@@ -16,6 +16,7 @@
                         <td>卖</td>
                         <td><font color="green">{{sell}}</font></td>
                     </tr>
-                </table>
+              </table>
+              <div align="center">{{stats | safe}}</div>
           </body>
 </html>
