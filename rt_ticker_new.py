@@ -1,4 +1,4 @@
-from datetime import  datetime
+from datetime import  datetime,date,timedelta
 import sys
 import os,shutil
 from futuquant import *
@@ -11,6 +11,7 @@ class TickerTest(TickerHandlerBase):
     def __init__(self):
         self.df_total = pd.DataFrame()
         self.df_total_final = pd.DataFrame()
+
         self.count = 0
         self.buy = 0
         self.sell = 0
@@ -32,7 +33,13 @@ class TickerTest(TickerHandlerBase):
             self.sell_lastnight = self.df_lastnight[(self.df_lastnight['ticker_direction'] == 'SELL') & (self.df_lastnight['code']== 'HK_FUTURE.999010')]['volume'].sum()
             self.buy = self.buy_lastnight
             self.sell = self.sell_lastnight
+        self.df_statistics = pd.read_csv(path_prefix + 'service/statistics.csv')
+        # if len(self.df_statistics[(self.df_statistics['date'] == strftime("%Y/%m/%d",localtime(time())))].index ) <= 0: #默认把今天的添加上，如果没有的话
+        #     self.df_statistics.loc[len(self.df_statistics.index)+1] = [strftime("%Y/%m/%d",localtime(time())),0,0,0.0,0,0,0.0]
         print(self.buy_lastnight,self.sell_lastnight,self.buy,self.sell)
+        #print(self.df_statistics)
+        #self.update_statistics()
+
 
     def on_recv_rsp(self, rsp_str):
         ret_code, data = super(TickerTest,self).on_recv_rsp(rsp_str)
@@ -124,8 +131,47 @@ class TickerTest(TickerHandlerBase):
         # </html>'
         # with open('service/static/total.html', 'w') as f:
         #    f.write(html)
+        self.update_statistics()
         with open('service/hsi.txt', 'w') as f2:
            f2.write(str(self.buy) + ',' +str(self.sell))
+
+
+    def update_statistics(self):
+        if len(self.df_statistics[(self.df_statistics['date'] == strftime("%Y/%m/%d",localtime(time())))].index ) <= 0: #默认把今天的添加上，如果没有的话
+            total = len(self.df_statistics.index)
+        else:
+            total = len(self.df_statistics.index)-1
+        last_close = 0
+        curr_price = 0
+        #获取当前最新价
+        ret,data = rt.quote_ctx.get_market_snapshot(['HK.999010'])
+        if ret == 0:
+            curr_price = data.iloc[len(data.index)-1]['last_price']
+        #开始获取上个交易日的收盘价
+        end_day=date(date.today().year,date.today().month,date.today().day)
+        days=7*7/5
+        #考虑到周六日非交易
+        start_day=end_day-timedelta(days)
+        start_day = start_day.strftime("%Y-%m-%d")
+        end_day=end_day.strftime("%Y-%m-%d")
+        ret,trade_day=rt.quote_ctx.get_trading_days(Market.HK, start=start_day, end=end_day)
+        ret, data, page_req_key = rt.quote_ctx.request_history_kline('HK.999010', start=trade_day[-1], end=trade_day[-1], max_count=1)
+        if ret == 0:
+            last_close = data.iloc[len(data.index)-1]['close']
+        else:
+            print("error%s"%ret)
+        dis = curr_price - last_close
+        self.df_statistics.loc[total,'date']= strftime("%Y/%m/%d",localtime(time()))
+        self.df_statistics.loc[total,'buy']=self.buy
+        self.df_statistics.loc[total,'sell']=self.sell
+        self.df_statistics.loc[total,'好淡比']=self.buy/self.sell
+        self.df_statistics.loc[total,'净仓']=self.buy - self.sell
+        self.df_statistics.loc[total,'涨跌额']=dis  #这里要取指数差额
+        self.df_statistics.loc[total,'净张贡献']=dis/(self.buy - self.sell) #这里要除以差额
+        self.df_statistics.to_csv(path_prefix + 'service/statistics.csv',index=False,float_format = '%.3f')
+        #print(self.df_statistics)
+
+
 
 
 
