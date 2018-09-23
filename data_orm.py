@@ -50,6 +50,7 @@ class StockRecord(Base):
     userid = Column(String(30))
     operation  = Column(Integer)
     recordtime = Column(Integer)
+    noticestatus = Column(Integer)
 
     __table_args__ = (
     UniqueConstraint('id', 'stockid', name='uix_id_stockid'),

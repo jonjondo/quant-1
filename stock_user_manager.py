@@ -34,7 +34,7 @@ class StockUserMgr:
                 operation  = Column(Integer)
                 recordtime = Column(Integer)
                 '''
-                s=StockRecord(stockid=stock_code,stockname=stock_name,userid=wxuser_openid,operation=operation,recordtime=int(time.time()))
+                s=StockRecord(stockid=stock_code,stockname=stock_name,userid=wxuser_openid,operation=operation,recordtime=int(time.time()),noticestatus=0)
                 self.session.add(s)
             self.session.commit()
         else:
@@ -97,8 +97,8 @@ class StockUserMgr:
                     else:
                         oper='WAIT'
                     #print(sr.userid,sr.stockid,search_stockname_by_stockcode(sr.stockid),'--',oper)
-
-                    wa.send_template_msg(sr.userid,sr.stockid,sr.stockname,'--',oper)
+                    if sr.noticestatus == 0:
+                        wa.send_template_msg(sr.userid,sr.stockid,sr.stockname,'--',oper)
 
     def search_stockrecord_by_stockcode_semi_rt(self,stock_code, semi_rt_oper, hints):
         stockrecord = self.session.query(StockRecord).filter(StockRecord.stockid == stock_code).all()
