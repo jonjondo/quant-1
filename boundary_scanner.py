@@ -264,12 +264,12 @@ def generate_list(quote_ctx, market, file_name, upper, lower):
     content_upper = df_to_write_sorted_upper.to_html()
 
     if market == "US":
-        for receipient in receipients:
-            sm.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
-            sm.send_email(receipient, market + " candidates to SHORT", content_upper, 'html')
+        #for receipient in receipients:
+        sm.send_mail_to_me(receipients, market + " candidates to LONG", content_lower)
+        sm.send_mail_to_me(receipients, market + " candidates to SHORT", content_upper)
     else:
-        for receipient in receipients:
-            sm.send_email(receipient, market + " candidates to LONG", content_lower, 'html')
+        #for receipient in receipients:
+        sm.send_mail_to_me(receipients, market + " candidates to LONG", content_lower)
 
 def find_all_good_candidates(quote_ctx, market, file_name, start_day, end_day):
     ret, data_frame = quote_ctx.get_stock_basicinfo(market=market, stock_type='STOCK')
