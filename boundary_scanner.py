@@ -17,6 +17,19 @@ from email.header import Header
 from datetime import datetime, timedelta, time
 from email.mime.text import MIMEText
 
+import linecache
+import sys
+
+def PrintException():
+    exc_type, exc_obj, tb = sys.exc_info()
+    f = tb.tb_frame
+    lineno = tb.tb_lineno
+    filename = f.f_code.co_filename
+    linecache.checkcache(filename)
+    line = linecache.getline(filename, lineno, f.f_globals)
+    print('EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj))
+
+
 path="/home/ubuntu/quant/quant/data/tempfile"
 
 bio_techs = "NKTR,ALKS,EXEL,CTLT,FGEN,AMRX,RDY,GMED,IMMU,ARRY,MDCO,HZNP,HRTX,IRWD,FOLD,AERI,ASND,SUPN,EBS,NUVA,PTLA,BPMC,ENDP,WMGI,HALO,CLVS,MNTA,SPPI,GBT,AKRX,XNCR,RGEN,CNMD,AXGN,CBM,ZGNX,ACAD,XLRN,TSRO,ARNA,MRTX,PBYI,XON,INSM,PBH,MNK,NXTM,PTCT,NVRO,AIMT,PCRX,DPLO,ARWR,CORT,IMGN,SGMO,LXRX,TBPH,ALDR,CHRS,ITCI,QURE,RDUS,CSII,ACOR,ESPR,RTRX,CRY,OFIX,BABY,ECYT,VNDA,OMER,RVNC,ASMB,KPTI,XENT,ADAP,FLXN,EPZM,VRAY,KTWO,TGTX,LJPC,MGNX,DVAX,ANIP,AMPH,CDXS,PETS,ADMS,DRNA,VKTX,COLL,CBAY,ABUS,CCXI,GLYC,AKBA,CARA,PRTA,ANIK,IVC,CUTR,FPRX,DEPO,FATE,LCI,STML,COOL,KIN,VCEL,DERM,MNOV,ZFGN,CNCE,VTL,PRTK,BSTC,MCRB,NERV,BLFS,NSTG,GLMD,IRMD,XOMA,SPNE,XENE,FONR,NATR,MSON,JNP,CBIO,CSBR,NAII"
@@ -118,6 +131,7 @@ def lo_sir_stock_pick(quote_ctx, stock_id, start_day, end_day):
         return False
     return False
 
+
 def get_stock_dmi_my_signal(quote_ctx, stock_id):
     N, MM = 14, 6
     now = datetime.now()
@@ -126,10 +140,12 @@ def get_stock_dmi_my_signal(quote_ctx, stock_id):
     end_day = now.strftime("%Y-%m-%d")
 
     ret, dfret = quote_ctx.get_history_kline(stock_id, start_day, end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
+    # print(dfret['time_key'])
     if not dfret.empty:
         high = dfret['high']
         low = dfret['low']
         close = dfret['close']
+        opens = dfret['open']
         df = pd.DataFrame()
         df['h-l'] = high - low
         df['h-c'] = abs(high - close.shift(1))
@@ -167,13 +183,14 @@ def get_stock_dmi_my_signal(quote_ctx, stock_id):
         df['AAJ'] = 0
         df['AAJ'] = ta.EMA(3 * df['ADX'] - 2 * df['ADXR'], 2)
 
-        dfret = pd.concat([dfret, df], axis=1)
-    return df['AAJ'], ma20, dfret['volume']
+        # dfret = pd.concat([dfret, df], axis=1)
+        # print(dfret)
+    return df['AAJ'], ma20, dfret['volume'], close, opens, dfret['turnover_rate']
 
 def generate_list(quote_ctx, market, file_name, upper, lower):
     ret, data_frame = quote_ctx.get_stock_basicinfo(market=market, stock_type='STOCK')
     df = data_frame[data_frame['name'].str.contains("退市|ST") == False]
-    print(df)
+    # print(df)
 
     tickers_lower = []
     names_lower = []
@@ -186,7 +203,6 @@ def generate_list(quote_ctx, market, file_name, upper, lower):
     volumes_upper = []
     turn_over_rate_upper = []
     n = 0
-    average_volume_days = 14
     for index, row in df.iterrows():
         try:
             aajs, ma20s, ret_volumes, closes, opens, turnovers = get_stock_dmi_my_signal(quote_ctx, row['code'])
@@ -223,13 +239,12 @@ def generate_list(quote_ctx, market, file_name, upper, lower):
                 turn_over_rate_lower.append(turnovers.values[-1])
                 n += 1
 
-        except:
+        except Exception as e:
             print("Ticker " + str(row['code']) + " " + str(row['name']) + " has a problem")
+            PrintException()
+            print(e)
         # if n > 0:
         #    break
-
-
-    email_agent = EmailNotification()
 
     data_lower = {'ticker': tickers_lower, 'name': names_lower, 'value': values_lower, 'volume' : volumes_lower, 'turnover rate' : turn_over_rate_lower}
 
