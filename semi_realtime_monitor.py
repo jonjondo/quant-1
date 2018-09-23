@@ -44,13 +44,19 @@ def process_single_df(dfret, stock_id, market_snap_data):
     N, MM = 14, 6
     high = dfret['high']
     size = len(high)
-    high[size] = market_snap_data[stock_id][0]
-
-    low = dfret['low']
-    low[size] = market_snap_data[stock_id][1]
-    close = dfret['close']
-    close[size] = market_snap_data[stock_id][2]
     df = pd.DataFrame()
+    try:
+        high[size] = market_snap_data[stock_id][0]
+        low = dfret['low']
+        low[size] = market_snap_data[stock_id][1]
+        close = dfret['close']
+        close[size] = market_snap_data[stock_id][2]
+    except:
+        print("key error or other%s"%stock_id)
+        df['AAJ']=None
+        ma20 = ta.SMA(dfret['close'].values, timeperiod=20)
+        return df['AAJ'],ma20
+
     df['h-l'] = high - low
     df['h-c'] = abs(high - close.shift(1))
     df['l-c'] = abs(close.shift(1) - low)
