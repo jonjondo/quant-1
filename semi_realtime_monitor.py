@@ -142,7 +142,7 @@ def my_monitor(quote_ctx, mgr):
     market_is_open = False
     #TODO： 冬令时和夏令时，而且应该用UTC时间，考虑到加村和中国刚好相反
     Chinese_market_open = time(9, 30)
-    Chinese_market_close = time(16, 0)
+    Chinese_market_close = time(16,00)
 
     US_market_open = time(21, 30)
     US_market_close = time(4, 0)
