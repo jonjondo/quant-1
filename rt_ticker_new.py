@@ -8,7 +8,7 @@ import math
 path_prefix= '/home/ubuntu/quant/quant/'
 file_name= path_prefix+'data/tempfile/rtdata/rt_test'+strftime("%Y%m%d",localtime(time()))
 path=path_prefix +"data/tempfile/rtdata/"
-objcode='SZ.002475'
+objcode='HK_FUTURE.999010'
 class TickerTest(TickerHandlerBase):
     def __init__(self):
         self.df_total = pd.DataFrame()
@@ -239,7 +239,7 @@ if __name__ == "__main__":
     '''
     handler = TickerTest()
     rt.quote_ctx.set_handler(handler)
-    rt.quote_ctx.subscribe(['SZ.002475','SH.600519'], [SubType.TICKER])
-    #rt.quote_ctx.subscribe(['HK.999010','HK.999011','HK.00700'], [SubType.TICKER])
+    #rt.quote_ctx.subscribe(['SZ.002475','SH.600519'], [SubType.TICKER])
+    rt.quote_ctx.subscribe(['HK.999010','HK.999011','HK.00700'], [SubType.TICKER])
     rt.quote_ctx.start()
     #time.sleep(15)
