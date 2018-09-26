@@ -1027,7 +1027,7 @@ class WhiteGuardStockCore:
         df_selected = df_selected[['code','stock_name','turnover_rate']]
         df_selected = df_selected.drop_duplicates(['code'])
         df_selected['operation'] = 'BUY'
-        df_selected.sort_values("turnover_rate",inplace=True)
+        df_selected.sort_values("turnover_rate",inplace=True,ascending=False)
         print("--------------以下为"+ market_name +"今日选股-----------------")
         print(df_selected)
         print("------------------"+ market_name +"结束----------------------")
@@ -1054,7 +1054,7 @@ class WhiteGuardStockCore:
         df_storage_keep.to_csv(os.path.join(path,"tempfile/"+ market_name +"_storagelist.csv"),columns=['code','stock_name'],index=False)
         df_storage_to_sell = df_storage_to_sell[['code','stock_name','turnover_rate']]
         df_storage_to_sell['operation'] = 'SELL'
-        df_storage_to_sell.sort_values("turnover_rate",inplace=True)
+        df_storage_to_sell.sort_values("turnover_rate",inplace=True,ascending=False)
         print("--------------"+ market_name +"市场以下持仓应该卖出-----------------")
         print(df_storage_to_sell)
         print("------------------"+ market_name +"卖出标志结束-----------------------")
