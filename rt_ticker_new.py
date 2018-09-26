@@ -4,9 +4,11 @@ import os,shutil
 from futuquant import *
 import pandas as pd
 from time import localtime,strftime,time
+import math
 path_prefix= '/home/ubuntu/quant/quant/'
 file_name= path_prefix+'data/tempfile/rtdata/rt_test'+strftime("%Y%m%d",localtime(time()))
 path=path_prefix +"data/tempfile/rtdata/"
+objcode='HK_FUTURE.999010'
 class TickerTest(TickerHandlerBase):
     def __init__(self):
         self.df_total = pd.DataFrame()
@@ -29,10 +31,16 @@ class TickerTest(TickerHandlerBase):
         else:
             self.night=''
             self.df_lastnight= pd.read_csv(lastnight_file_name+"_night.csv")
-            self.buy_lastnight = self.df_lastnight[(self.df_lastnight['ticker_direction'] == 'BUY') & (self.df_lastnight['code']== 'HK_FUTURE.999010')]['volume'].sum()
-            self.sell_lastnight = self.df_lastnight[(self.df_lastnight['ticker_direction'] == 'SELL') & (self.df_lastnight['code']== 'HK_FUTURE.999010')]['volume'].sum()
-            self.buy = self.buy_lastnight
-            self.sell = self.sell_lastnight
+            self.buy_lastnight = self.df_lastnight[(self.df_lastnight['ticker_direction'] == 'BUY') & (self.df_lastnight['code']== objcode)]['volume'].sum()
+            self.sell_lastnight = self.df_lastnight[(self.df_lastnight['ticker_direction'] == 'SELL') & (self.df_lastnight['code']== objcode)]['volume'].sum()
+            if not math.isnan(self.buy_lastnight):
+                self.buy = self.buy_lastnight
+            else:
+                self.buy = 0
+            if not math.isnan(self.sell_lastnight):
+                self.sell = self.sell_lastnight
+            else:
+                self.sell = 0
         self.df_statistics = pd.read_csv(path_prefix + 'service/statistics.csv')
         # if len(self.df_statistics[(self.df_statistics['date'] == strftime("%Y/%m/%d",localtime(time())))].index ) <= 0: #默认把今天的添加上，如果没有的话
         #     self.df_statistics.loc[len(self.df_statistics.index)+1] = [strftime("%Y/%m/%d",localtime(time())),0,0,0.0,0,0,0.0]
@@ -98,12 +106,12 @@ class TickerTest(TickerHandlerBase):
         else:
             self.df_total.to_csv(new_file_name,mode='a',header=False)
 
-        if len(self.df_total[(self.df_total['ticker_direction'] == 'BUY') & ( self.df_total['code']== 'HK_FUTURE.999010')].index) > 0:
-            self.buy = self.buy + self.df_total[(self.df_total['ticker_direction'] == 'BUY') & ( self.df_total['code']== 'HK_FUTURE.999010')]['volume'].sum()
-        if len(self.df_total[(self.df_total['ticker_direction'] == 'SELL') & ( self.df_total['code']== 'HK_FUTURE.999010')].index) > 0:
-            self.sell = self.sell + self.df_total[(self.df_total['ticker_direction'] == 'SELL') & ( self.df_total['code']== 'HK_FUTURE.999010')]['volume'].sum()
+        if len(self.df_total[(self.df_total['ticker_direction'] == 'BUY') & ( self.df_total['code']== objcode)].index) > 0:
+            self.buy = self.buy + self.df_total[(self.df_total['ticker_direction'] == 'BUY') & ( self.df_total['code']== objcode)]['volume'].sum()
+        if len(self.df_total[(self.df_total['ticker_direction'] == 'SELL') & ( self.df_total['code']== objcode)].index) > 0:
+            self.sell = self.sell + self.df_total[(self.df_total['ticker_direction'] == 'SELL') & ( self.df_total['code']== objcode)]['volume'].sum()
 
-        self.strcount = "本次tick买:" + str(self.df_total[(self.df_total['ticker_direction'] == 'BUY') & ( self.df_total['code']== 'HK_FUTURE.999010')]['volume'].sum()) + "卖:" +str(self.df_total[(self.df_total['ticker_direction'] == 'SELL') &  (self.df_total['code']== 'HK_FUTURE.999010')]['volume'].sum())
+        self.strcount = "本次tick买:" + str(self.df_total[(self.df_total['ticker_direction'] == 'BUY') & ( self.df_total['code']== objcode)]['volume'].sum()) + "卖:" +str(self.df_total[(self.df_total['ticker_direction'] == 'SELL') &  (self.df_total['code']== objcode)]['volume'].sum())
         print(self.buy,self.sell,self.strcount)
         self.render_html()
         return RET_OK, data
@@ -131,7 +139,7 @@ class TickerTest(TickerHandlerBase):
         # </html>'
         # with open('service/static/total.html', 'w') as f:
         #    f.write(html)
-        self.update_statistics()
+        #self.update_statistics()
         with open('service/hsi.txt', 'w') as f2:
            f2.write(str(self.buy) + ',' +str(self.sell))
 
@@ -159,7 +167,7 @@ class TickerTest(TickerHandlerBase):
         if ret == 0:
             last_close = data.iloc[len(data.index)-1]['close']
         else:
-            print("error%s"%ret)
+            print("last_close error%s"%ret)
         dis = curr_price - last_close
         self.df_statistics.loc[total,'date']= strftime("%Y/%m/%d",localtime(time()))
         self.df_statistics.loc[total,'buy']=self.buy
@@ -231,6 +239,7 @@ if __name__ == "__main__":
     '''
     handler = TickerTest()
     rt.quote_ctx.set_handler(handler)
+    #rt.quote_ctx.subscribe(['SZ.002475','SH.600519'], [SubType.TICKER])
     rt.quote_ctx.subscribe(['HK.999010','HK.999011','HK.00700'], [SubType.TICKER])
     rt.quote_ctx.start()
     #time.sleep(15)
