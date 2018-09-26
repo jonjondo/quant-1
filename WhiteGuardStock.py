@@ -1063,7 +1063,7 @@ class WhiteGuardStockCore:
         #         self.smgr.search_stockrecord_by_stockcode(df_storage_to_sell.ix[i,'code'])
         df_today_selection = pd.concat([df_selected,df_storage_to_sell],axis=0)
         #print(df_today_selection)
-        html = df2html.df_to_html(df_today_selection[['code','stock_name','operation']])
+        html = df2html.df_to_html(df_today_selection[['code','stock_name','turnover_rate','operation']])
 
 
         #testmode不通知
