@@ -1022,9 +1022,10 @@ class WhiteGuardStockCore:
         #df_selected =wgs.df_total.loc[(wgs.df_total['DMI2'] == 1) & (wgs.df_total['KDJ'] >= 1) & (wgs.df_total['MA5'] >= 1) & (wgs.df_total['MA120Status'] >= 1)]
         df_selected =wgs.df_total.loc[(wgs.df_total['DMI2'] == 1) & (wgs.df_total['KDJ'] >= 1) & (wgs.df_total['MA5'] >= 1) & (wgs.df_total['MA120Status'] >= 1)]
         df_sell = wgs.df_total.loc[(wgs.df_total['DMI2'] == -1)]
-        df_selected = df_selected[['code','stock_name']]
+        df_selected = df_selected[['code','stock_name','turnover_rate']]
         df_selected = df_selected.drop_duplicates(['code'])
         df_selected['operation'] = 'BUY'
+        df_selected.sort_values("turnover_rate",inplace=True)
         print("--------------以下为"+ market_name +"今日选股-----------------")
         print(df_selected)
         print("------------------"+ market_name +"结束----------------------")
@@ -1049,8 +1050,9 @@ class WhiteGuardStockCore:
         #df_storage_to_sell = df_storage[(df_storage['code'].isin(df_sell['code']))]
         df_storage_to_sell=wgs.df_total.loc[(wgs.df_total['DMI2'] == -1)]
         df_storage_keep.to_csv(os.path.join(path,"tempfile/"+ market_name +"_storagelist.csv"),columns=['code','stock_name'],index=False)
-        df_storage_to_sell = df_storage_to_sell[['code','stock_name']]
+        df_storage_to_sell = df_storage_to_sell[['code','stock_name','turnover_rate']]
         df_storage_to_sell['operation'] = 'SELL'
+        df_storage_to_sell.sort_values("turnover_rate",inplace=True)
         print("--------------"+ market_name +"市场以下持仓应该卖出-----------------")
         print(df_storage_to_sell)
         print("------------------"+ market_name +"卖出标志结束-----------------------")
