@@ -508,6 +508,8 @@ class WhiteGuardStockCore:
         except Exception as e:
             print("get_stock_my_schedule_signal in get_stock_dmi_my_signal_data %s"%(e))
 
+        self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'turnover_rate']= stock_data['turnover_rate'].tolist()[-1]#换手率加这里
+
         #print(stock_data)
         #sm.send_mail(html)
         #return stock_data
