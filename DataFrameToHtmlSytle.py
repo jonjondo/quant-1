@@ -35,7 +35,7 @@ def csv_to_html():
     html = (
     df.style
     .applymap(color_negative_red, subset=['operation'])
-    .set_properties(**{'font-size': '9pt', 'font-family': 'Calibri','align':'center', 'border-style':'solid', 'border-width':'1px','border-color': 'gray','border-spacing':'0px'})
+    .set_properties(**{'font-size': '11pt', 'font-family': 'Calibri','align':'center', 'border-style':'solid', 'border-width':'1px','border-color': 'gray','border-spacing':'0px'})
     .set_caption("Quant From Gua")
     .set_table_styles(\
         [{'selector': '.row_heading',\
@@ -66,7 +66,7 @@ def df_to_html(df):
     html = (
     df.style
     .applymap(color_negative_red, subset=['operation'])
-    .set_properties(**{'font-size': '7pt', 'font-family': 'Calibri','align':'center', 'border-style':'solid', 'border-width':'1px','border-color': 'gray','border-spacing':'0px'})
+    .set_properties(**{'font-size': '11pt', 'font-family': 'Calibri','align':'center', 'border-style':'solid', 'border-width':'1px','border-color': 'gray','border-spacing':'0px'})
     .set_caption("Quant From Gua")
     .set_table_styles(\
     [{'selector': '.row_heading',\
