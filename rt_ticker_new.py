@@ -19,9 +19,10 @@ class TickerTest(TickerHandlerBase):
         self.sell = 0
         self.write_header = True
         if strftime("%a",localtime(time())) == 'Mon':
-            lastnight_file_name = path_prefix + 'data/tempfile/rtdata/rt_' + str(int(strftime("%Y%m%d",localtime(time())))-3)
+            lastnight_file_name = path_prefix + 'data/tempfile/rtdata/rt_' + datetime.strptime(str(date.today()+timedelta(-3)),"%Y-%m-%d").strftime("%Y%m%d")
         else:
-            lastnight_file_name = path_prefix + 'data/tempfile/rtdata/rt_' + str(int(strftime("%Y%m%d",localtime(time())))-1)
+            lastnight_file_name = path_prefix + 'data/tempfile/rtdata/rt_' +datetime.strptime(str(date.today()+timedelta(-1)),"%Y-%m-%d").strftime("%Y%m%d")
+
 
         if (datetime.now().hour >= 17 or datetime.now().hour < 6):
             self.night = '_night'
@@ -180,8 +181,16 @@ class TickerTest(TickerHandlerBase):
         #print(self.df_statistics)
 
 
+def getDatetimeYesterday(days):
+        today = getDatetimeToday() #datetime类型当前日期
+        yesterday = today + timedelta(days = -1) #减去一天
+        print(yesterday)
+        return yesterday
 
-
+def getDatetimeToday(self):
+        t = date.today()  #date类型
+        dt = datetime.strptime(str(t),'%Y-%m-%d') #date转str再转datetime
+        return dt
 
 def time_in_range(start, end, x):
     """Return true if x is in the range [start, end]"""
@@ -232,14 +241,12 @@ class rtCore:
 
 rt = rtCore()
 if __name__ == "__main__":
-    #quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
-    rt.start_connect('127.0.0.1',11111)
-    '''
-    get_ticker(quote_ctx,['HK.02318'])
-    '''
-    handler = TickerTest()
-    rt.quote_ctx.set_handler(handler)
-    #rt.quote_ctx.subscribe(['SZ.002475','SH.600519'], [SubType.TICKER])
-    rt.quote_ctx.subscribe(['HK.999010','HK.999011','HK.00700'], [SubType.TICKER])
-    rt.quote_ctx.start()
-    #time.sleep(15)
+    # rt.start_connect('127.0.0.1',11111)
+    # handler = TickerTest()
+    # rt.quote_ctx.set_handler(handler)
+    # #rt.quote_ctx.subscribe(['SZ.002475','SH.600519'], [SubType.TICKER])
+    # rt.quote_ctx.subscribe(['HK.999010','HK.999011','HK.00700'], [SubType.TICKER])
+    # rt.quote_ctx.start()
+    # #time.sleep(15)
+
+    print(getDatetimeYesterday)
