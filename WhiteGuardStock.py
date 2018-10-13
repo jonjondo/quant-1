@@ -1068,6 +1068,13 @@ class WhiteGuardStockCore:
         print("--------------以下为"+ market_name +"今日选股-----------------")
         print(df_selected)
         print("------------------"+ market_name +"结束----------------------")
+
+        df_selected_option = wgs.df_total.loc[(wgs.df_total['DMI2'] != 0 ) & (wgs.df_total['BOLL'] !=0)]
+
+        print("--------------以下"+ market_name +"市场考虑衍生品-----------------")
+        print(df_selected_option)
+        print("------------------"+ market_name +"衍生品选股结束----------------------")
+
         # if len(df_selected.index) > 0:
         #     for i in range(len(df_selected.index)):
         #         self.smgr.update_stock_operation(df_selected.ix[i,'code'],1)
@@ -1188,15 +1195,19 @@ if __name__ == "__main__":
     #wgs=WhiteGuardStockCore()
     #wgs=WhiteGuardStockCore('119.29.141.202',11111)
     market = 0
-    opts, args = getopt.getopt(sys.argv[1:], "hm:")
+    testmode = False
+    opts, args = getopt.getopt(sys.argv[1:], "htm:")
     for op, value in opts:
         if op == "-m":
             market = int(value)
+        elif op == "-t":
+            testmode = True
         elif op == "-h":
             print('Use -m to specify a market,0:CN,1:HK,2:US')
             sys.exit()
 
     wgs=WhiteGuardStockCore()
+    wgs.testmode = testmode
     wgs.start_connect('127.0.0.1',11111)
     #wgs.init_cn_stock("data/stocklist.csv")
     #wgs.loop_all_cn_stocks('futu',30,0)
