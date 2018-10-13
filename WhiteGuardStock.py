@@ -1070,7 +1070,8 @@ class WhiteGuardStockCore:
         print("------------------"+ market_name +"结束----------------------")
 
         df_selected_option = wgs.df_total.loc[(wgs.df_total['DMI2'] != 0 ) & (wgs.df_total['BOLL'] !=0)]
-
+        df_selected_option = df_selected_option[['code','stock_name','DMI2','BOLL','turnover_rate']]
+        df_selected_option['operation']='OPTION'
         print("--------------以下"+ market_name +"市场考虑衍生品-----------------")
         print(df_selected_option)
         print("------------------"+ market_name +"衍生品选股结束----------------------")
@@ -1118,7 +1119,7 @@ class WhiteGuardStockCore:
             sm.send_mail_with_attach("Daily Quant("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html,os.path.join(path,'tempfile/量化结果汇总_'+ str(market) + '_' + time.strftime("%Y%m%d",time.localtime(time.time())) + '.csv'))
             wechatmsg.add_news_and_send_to_all("Daily Quant("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html,market)
             #wechatmsg.sendmsgtoalluser("Daily Quant("+ market_name +" Market)\n" +df_today_selection[['code','stock_name','operation']].to_string(index=False,header=False))
-
+            sm.send_mail_to_single_user('wangpenghehe@qq.com','Quant Option List',df2html.df_to_html(df_selected_option))
             for i in range(len(df_today_selection.index)):
                 oper = 0
                 if df_today_selection.iloc[i]['operation'] == 'SELL':
@@ -1127,6 +1128,8 @@ class WhiteGuardStockCore:
                     oper = 1
                 #self.smgr.update_stock_operation(df_today_selection.iloc[i]['code'],oper)
                 self.smgr.search_stockrecord_by_stockcode(df_today_selection.iloc[i]['code'],oper)
+        else:
+            sm.send_mail_to_single_user('wangpenghehe@qq.com','Quant Option List',df2html.df_to_html(df_selected_option))
 
     def test_notification(self):
         df_storage = pb.read_csv(os.path.join(path,"tempfile/US_storagelist.csv"),encoding='gbk')
