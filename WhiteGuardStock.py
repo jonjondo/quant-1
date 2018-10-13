@@ -1124,7 +1124,7 @@ class WhiteGuardStockCore:
             wechatmsg.add_news_and_send_to_all("Daily Quant("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",html,market)
             #wechatmsg.sendmsgtoalluser("Daily Quant("+ market_name +" Market)\n" +df_today_selection[['code','stock_name','operation']].to_string(index=False,header=False))
             if market_name != 'CN':
-                sm.send_mail_to_single_user('wangpenghehe@qq.com','Quant Option List',df2html.df_to_html(df_selected_option))
+                sm.send_mail_to_single_user('wangpenghehe@qq.com',"Quant Option List("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",df2html.df_to_html(df_selected_option))
             for i in range(len(df_today_selection.index)):
                 oper = 0
                 if df_today_selection.iloc[i]['operation'] == 'SELL':
@@ -1135,7 +1135,7 @@ class WhiteGuardStockCore:
                 self.smgr.search_stockrecord_by_stockcode(df_today_selection.iloc[i]['code'],oper)
         else:
             if market_name != 'CN':
-                sm.send_mail_to_single_user('wangpenghehe@qq.com','Quant Option List',df2html.df_to_html(df_selected_option))
+                sm.send_mail_to_single_user('wangpenghehe@qq.com',"Quant Option List("+ market_name +" Market " + time.strftime("%Y%m%d",time.localtime(time.time())) + ")",df2html.df_to_html(df_selected_option))
 
     def test_notification(self):
         df_storage = pb.read_csv(os.path.join(path,"tempfile/US_storagelist.csv"),encoding='gbk')
