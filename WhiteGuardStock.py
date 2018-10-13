@@ -1058,6 +1058,8 @@ class WhiteGuardStockCore:
         else:
             market_name = 'ALL'
 
+
+        wgs.df_total.fillna(0, inplace = True)
         #df_selected =wgs.df_total.loc[(wgs.df_total['DMI2'] == 1) & (wgs.df_total['KDJ'] >= 1) & (wgs.df_total['MA5'] >= 1) & (wgs.df_total['MA120Status'] >= 1)]
         df_selected =wgs.df_total.loc[(wgs.df_total['DMI2'] == 1) & (wgs.df_total['KDJ'] >= 1) & (wgs.df_total['MA5'] >= 1) & (wgs.df_total['MA120Status'] >= 1)]
         df_sell = wgs.df_total.loc[(wgs.df_total['DMI2'] == -1)]
@@ -1070,8 +1072,6 @@ class WhiteGuardStockCore:
         print("------------------"+ market_name +"结束----------------------")
 
         df_selected_option = wgs.df_total.loc[(wgs.df_total['DMI2'] != 0  ) & (wgs.df_total['BOLL'] !=0)]
-        df_selected_option.fillna(0, inplace = True)
-        df_selected_option = df_selected_option.loc[(wgs.df_total['DMI2'] != 0  ) & (wgs.df_total['BOLL'] !=0)]
         df_selected_option = df_selected_option[['code','stock_name','DMI2','BOLL','turnover_rate']]
         df_selected_option.sort_values("turnover_rate",inplace=True,ascending=False)
         df_selected_option['operation']='OPTION'
