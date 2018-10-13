@@ -1075,7 +1075,7 @@ class WhiteGuardStockCore:
         df_selected_option = df_selected_option[['code','stock_name','DMI2','BOLL','turnover_rate']]
         df_selected_option.sort_values("turnover_rate",inplace=True,ascending=False)
         df_selected_option['operation']='OPTION'
-        df_selected_option.drop_duplicates(['code'])
+        df_selected_option=df_selected_option.drop_duplicates(['code'])
         print("--------------以下"+ market_name +"市场考虑衍生品-----------------")
         print(df_selected_option)
         print("------------------"+ market_name +"衍生品选股结束----------------------")
