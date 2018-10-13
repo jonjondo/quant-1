@@ -28,7 +28,7 @@ class WhiteGuardStockCore:
         # self.quote_ctx = OpenQuoteContext(self.api_ip, self.api_port)
         self.df_total = pd.DataFrame()
         self.smgr = StockUserMgr()
-        self.testmode = False 
+        self.testmode = True 
     def start_connect(self,dst_ip,dst_port):
         self.quote_ctx = OpenQuoteContext(dst_ip, dst_port)
 
@@ -398,6 +398,35 @@ class WhiteGuardStockCore:
         except Exception as e:
             print("错误：%s,返回结果%s in get_stock_ma_cross_signal_data"% (e,df))
 
+    def get_stock_my_boll_signal(self,stock_id,start_day,end_day):
+        try:
+            ret, stock_data = self.quote_ctx.get_history_kline(stock_id, start=start_day,end=end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
+            return  self.get_stock_my_boll_signal_data(stock_data)
+        except Exception as e:
+            print("错误：%s,返回结果%s in get_stock_my_boll_signal"% (e,stock_data))
+    
+    def get_stock_my_boll_signal_data(self,stock_data):
+        try:
+            closed=stock_data['close'].values
+            upper,middle,lower=ta.BBANDS(closed,timeperiod=20,matype=ta.MA_Type.SMA)
+            if stock_data.iloc[-1]['high'] > upper[-1] and stock_data.iloc[-2]['high'] > upper[-2] and stock_data.iloc[-3]['high'] > upper[-3]:
+                print(stock_data.iloc[-1]['high'] , upper[-1] ,stock_data.iloc[-2]['high'] ,upper[-2] ,stock_data.iloc[-3]['high'] , upper[-3])
+                return True,-1
+            elif stock_data.iloc[-1]['low'] < lower[-1] and stock_data.iloc[-2]['low'] < lower[-2] and stock_data.iloc[-3]['low'] < lower[-3]:
+                return True,1
+            else:
+                return False,0
+        except Exception as e:
+            print("错误：%s,in get_stock_my_boll_signal_data"% (e))
+            return False,0
+
+
+
+
+
+
+
+
     def get_stock_my_macd_signal(self,stock_id,start_day,end_day):
         try:
             ret, stock_data = self.quote_ctx.get_history_kline(stock_id, start=start_day,end=end_day, ktype='K_DAY', autype='qfq')  # 获取历史K线
@@ -477,6 +506,20 @@ class WhiteGuardStockCore:
         else:
             self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'MACROSS']=0
 
+        if self.get_stock_my_macd_signal_data(stock_data) == True:
+            self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'MACD']=1
+            print("%s[MACD趋势相交]"%(stock_data['code'].tolist()[0]))
+        else:
+            self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'MACD']=0
+        try:  
+            bollret,bollflag = self.get_stock_my_boll_signal_data(stock_data)
+            if bollret  == True:
+                self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'BOLL']=bollflag
+                print("%s[BOLL连续三日破轨]"%(stock_data['code'].tolist()[0]))
+            else:
+                self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'BOLL']=0
+        except Exception as e:
+            print("get_stock_my_schedule_signal in get_stock_my_boll_signal_data %s"%(e))
         try:
             df=self.get_stock_dmi_my_signal_data(stock_data)
             #print(df)
@@ -499,15 +542,9 @@ class WhiteGuardStockCore:
                 print("%s[DMI2顶部反转]"%(stock_data['code'].tolist()[0]))
             else:
                 self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'DMI2']= 0
-
-            if self.get_stock_my_macd_signal_data(stock_data) == True:
-                self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'MACD']=1
-                print("%s[MACD趋势相交]"%(stock_data['code'].tolist()[0]))
-            else:
-                self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'MACD']=0
         except Exception as e:
             print("get_stock_my_schedule_signal in get_stock_dmi_my_signal_data %s"%(e))
-
+        
         self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'turnover_rate']= stock_data['turnover_rate'].tolist()[-1]#换手率加这里
 
         #print(stock_data)
