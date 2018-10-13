@@ -530,7 +530,7 @@ class WhiteGuardStockCore:
             #最新的AAJ小于0，且大于低谷，并且低谷就是近一段时间的最低值，确认反转
             if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and (math.isclose(df.iat[-2,-1], minaaj) or math.isclose(df.iat[-3,-1] , minaaj)): #-20拍脑袋的
             #if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #从-45改成0
-                if df['close'].values[-1] > df['high'].values[-2]:
+                if df['close'].values[-1] > df['open'].values[-1]: #最后一天收阳线。
                     #print("%s  %s %s[DMI2数值]"%(stock_data['code'].tolist()[0],df['close'].values[-1] , df['high'].values[-2]))
                     self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'DMI2']=1
                     print("%s[DMI2底部反转]"%(stock_data['code'].tolist()[0]))
@@ -1070,10 +1070,10 @@ class WhiteGuardStockCore:
         print("------------------"+ market_name +"结束----------------------")
 
         df_selected_option = wgs.df_total.loc[(wgs.df_total['DMI2'] != 0  ) & (wgs.df_total['BOLL'] !=0)]
-        df_selected_option.dropna(axis=0,how='any')
         df_selected_option = df_selected_option[['code','stock_name','DMI2','BOLL','turnover_rate']]
         df_selected_option.sort_values("turnover_rate",inplace=True,ascending=False)
         df_selected_option['operation']='OPTION'
+        df_selected_option.dropna(axis=0)
         print("--------------以下"+ market_name +"市场考虑衍生品-----------------")
         print(df_selected_option)
         print("------------------"+ market_name +"衍生品选股结束----------------------")
