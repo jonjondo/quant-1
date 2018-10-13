@@ -1070,10 +1070,11 @@ class WhiteGuardStockCore:
         print("------------------"+ market_name +"结束----------------------")
 
         df_selected_option = wgs.df_total.loc[(wgs.df_total['DMI2'] != 0  ) & (wgs.df_total['BOLL'] !=0)]
+        df_selected_option.fillna(0, inplace = True)
+        df_selected_option = df_selected_option.loc[(wgs.df_total['DMI2'] != 0  ) & (wgs.df_total['BOLL'] !=0)]
         df_selected_option = df_selected_option[['code','stock_name','DMI2','BOLL','turnover_rate']]
         df_selected_option.sort_values("turnover_rate",inplace=True,ascending=False)
         df_selected_option['operation']='OPTION'
-        df_selected_option.dropna(axis=0)
         print("--------------以下"+ market_name +"市场考虑衍生品-----------------")
         print(df_selected_option)
         print("------------------"+ market_name +"衍生品选股结束----------------------")
