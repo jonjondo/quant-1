@@ -530,7 +530,7 @@ class WhiteGuardStockCore:
             #最新的AAJ小于0，且大于低谷，并且低谷就是近一段时间的最低值，确认反转
             if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and (math.isclose(df.iat[-2,-1], minaaj) or math.isclose(df.iat[-3,-1] , minaaj)): #-20拍脑袋的
             #if df.iat[-1,-1] < 0 and df.iat[-2,-1] < df.iat[-1,-1] and df.iat[-2,-1] == minaaj: #从-45改成0
-                if df['close'].values[-1] > df['open'].values[-1]: #最后一天收阳线。
+                if (df['close'].values[-1] > df['open'].values[-1]) or (df['low'].values[-1] > df['close'].values[-2]) : #最后一天收阳线,或者最后一天最低大于倒数第二天收盘
                     #print("%s  %s %s[DMI2数值]"%(stock_data['code'].tolist()[0],df['close'].values[-1] , df['high'].values[-2]))
                     self.active_list.loc[(self.active_list.code == stock_data['code'].tolist()[0]),'DMI2']=1
                     print("%s[DMI2底部反转]"%(stock_data['code'].tolist()[0]))
