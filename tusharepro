@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import talib
-
+'''
 df=ts.get_k_data('600600')
 close = [float(x) for x in df['close']]
 df['RSI']=talib.RSI(np.array(close), timeperiod=12)     #RSI的天数一般是6、12、24
@@ -20,3 +20,11 @@ plt.legend(loc='best')
 plt.grid()
 #记得加这一句，不然不会显示图像
 plt.show()
+'''
+
+ts.set_token('c641747447b8280fec5c6956dfe6bc009abe91198b79bfff4ac2615d')
+pro = ts.pro_api()
+
+#查询当前所有正常上市交易的股票列表
+df = pro.income(ts_code='002475.SZ', start_date='20160101', end_date='20181104')
+df.to_csv('002475.csv')

@@ -1,4 +1,7 @@
 __author__ = 'lottiwang'
+'''
+靠山计算法的通用公式
+'''
 from datetime import datetime
 import sys
 import os

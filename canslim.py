@@ -73,7 +73,9 @@ def select_high_nprg_growth_stock(rate):
     df=pb.read_csv(os.path.join(path,"total_cn_stock_growth_ability.csv"))
     position_gold_2017 = (df['nprg_2017q4'] > df['nprg_2017q3']) & (df['nprg_2017q3'] > df['nprg_2017q2']) & (df['nprg_2017q2'] > df['nprg_2017q1'])
     position_gold_2016 = (df['nprg_2016q4'] > df['nprg_2016q3']) & (df['nprg_2016q3'] > df['nprg_2016q2']) & (df['nprg_2016q2'] > df['nprg_2016q1'])
-    position_gold = position_gold_2017 & position_gold_2016 | (df['nprg_2018q2'] - df['nprg_2018q1'] > rate)
+    position_gold_2018 = (df['nprg_2018q3'] > df['nprg_2018q2']) & (df['nprg_2018q2'] > df['nprg_2018q1'])
+
+    position_gold = position_gold_2017 & position_gold_2016 & position_gold_2018
     df.loc[position_gold[(position_gold == True) & (position_gold.shift() == False)].index, 'nprg_good'] = 1
     #df.loc[position_gold[(position_gold == False) & (position_gold.shift() == True)].index, 'nprg_good'] = 0
     #df2=df[df['优质'] == 1]
@@ -83,7 +85,8 @@ def select_high_profits_yoy_growth_stock(rate):
     df=pb.read_csv(os.path.join(path,"total_cn_stock_quater_report.csv"))
     position_gold_2017 = (df['profits_yoy_2017q4'] > df['profits_yoy_2017q3']) & (df['profits_yoy_2017q3'] > df['profits_yoy_2017q2']) & (df['profits_yoy_2017q2'] > df['profits_yoy_2017q1'])
     position_gold_2016 = (df['profits_yoy_2016q4'] > df['profits_yoy_2016q3']) & (df['profits_yoy_2016q3'] > df['profits_yoy_2016q2']) & (df['profits_yoy_2016q2'] > df['profits_yoy_2016q1'])
-    position_gold = position_gold_2017 | position_gold_2016
+    position_gold_2018 = (df['profits_yoy_2018q3'] > df['profits_yoy_2018q2']) & (df['profits_yoy_2018q2'] > df['profits_yoy_2018q1'])
+    position_gold = position_gold_2017 | position_gold_2018
     df.loc[position_gold[(position_gold == True) & (position_gold.shift() == False)].index, 'profits_yoy_good'] = 1
     #df.loc[position_gold[(position_gold == False) & (position_gold.shift() == True)].index, 'profits_yoy_good'] = 0
     #df2=df[df['优质'] == 1]
@@ -94,7 +97,8 @@ def select_high_roe_gross_profits_stock(roe_rate,gross_rate,income_rate):
     #计算毛利率增长逻辑
     position_gold_2017 = (df['gross_profit_rate_2017q4'] > df['gross_profit_rate_2017q3']) & (df['gross_profit_rate_2017q3'] > df['gross_profit_rate_2017q2']) & (df['gross_profit_rate_2017q2'] > df['gross_profit_rate_2017q1'])
     position_gold_2016 = (df['gross_profit_rate_2016q4'] > df['gross_profit_rate_2016q3']) & (df['gross_profit_rate_2016q3'] > df['gross_profit_rate_2016q2']) & (df['gross_profit_rate_2016q2'] > df['gross_profit_rate_2016q1'])
-    position_gold = position_gold_2017 & position_gold_2016 |((df['gross_profit_rate_2018q1'] > gross_rate) & (df['gross_profit_rate_2018q2'] > gross_rate))
+    position_gold_2018 = (df['gross_profit_rate_2018q3'] > df['gross_profit_rate_2018q2']) & (df['gross_profit_rate_2018q2'] > df['gross_profit_rate_2018q1'])
+    position_gold = position_gold_2017  & position_gold_2018 |((df['gross_profit_rate_2018q3'] > gross_rate) & (df['gross_profit_rate_2018q2'] > gross_rate))
     df.loc[position_gold[(position_gold == True) & (position_gold.shift() == False)].index, 'gross_profit_rate_good'] = 1
     #df.loc[position_gold[(position_gold == False) & (position_gold.shift() == True)].index, 'gross_profit_rate_good'] = 0
 
@@ -103,14 +107,17 @@ def select_high_roe_gross_profits_stock(roe_rate,gross_rate,income_rate):
     #净资产收益率计算逻辑
     position_roe_gold_2017 = (df['roe_2017q4'] > df['roe_2017q3']) & (df['roe_2017q3'] > df['roe_2017q2']) & (df['roe_2017q2'] > df['roe_2017q1'])
     position_roe_gold_2016 = (df['roe_2016q4'] > df['roe_2016q3']) & (df['roe_2016q3'] > df['roe_2016q2']) & (df['roe_2016q2'] > df['roe_2016q1'])
-    position_gold = (position_roe_gold_2017 & position_roe_gold_2016) &((df['roe_2018q1'] > roe_rate) | (df['roe_2018q2'] > roe_rate))
+    position_roe_gold_2018 = (df['roe_2018q3'] > df['roe_2018q2']) & (df['roe_2018q2'] > df['roe_2018q1'])
+
+    position_gold = (position_roe_gold_2017 & position_roe_gold_2018) &((df['roe_2018q3'] > roe_rate) | (df['roe_2018q2'] > roe_rate))
     df.loc[position_gold[(position_gold == True) & (position_gold.shift() == False)].index, 'roe_good'] = 1
     #df.loc[position_gold[(position_gold == False) & (position_gold.shift() == True)].index, 'roe_good'] = 0
 
     #主营业务收入
     position_roe_gold_2017 = (df['business_income_2017q4'] > df['business_income_2017q3']) & (df['business_income_2017q3'] > df['business_income_2017q2']) & (df['business_income_2017q2'] > df['business_income_2017q1'])
     position_roe_gold_2016 = (df['business_income_2016q4'] > df['business_income_2016q3']) & (df['business_income_2016q3'] > df['business_income_2016q2']) & (df['business_income_2016q2'] > df['business_income_2016q1'])
-    position_gold = (position_roe_gold_2017 & position_roe_gold_2016) |  ((df['business_income_2018q2'] - df['business_income_2018q1'])/df['business_income_2018q1'] * 100 > income_rate)
+    position_roe_gold_2018 = (df['business_income_2018q3'] > df['business_income_2018q2']) & (df['business_income_2018q2'] > df['business_income_2018q1'])
+    position_gold = (position_roe_gold_2017 & position_roe_gold_2018) |  ((df['business_income_2018q3'] - df['business_income_2018q2'])/df['business_income_2018q2'] * 100 > income_rate)
     df.loc[position_gold[(position_gold == True) & (position_gold.shift() == False)].index, 'business_income_good'] = 1
 
 
@@ -123,9 +130,10 @@ def select_high_cash_ratio_stock(rate):
     df=pb.read_csv(os.path.join(path,"total_cn_stock_cash_flow.csv")) #cashflowratio
     position_gold_2017 = (df['cashflowratio_2017q4'] > df['cashflowratio_2017q3']) & (df['cashflowratio_2017q3'] > df['cashflowratio_2017q2']) & (df['cashflowratio_2017q2'] > df['cashflowratio_2017q1'])
     position_gold_2016 = (df['cashflowratio_2016q4'] > df['cashflowratio_2016q3']) & (df['cashflowratio_2016q3'] > df['cashflowratio_2016q2']) & (df['cashflowratio_2016q2'] > df['cashflowratio_2016q1'])
+    position_gold_2018 = (df['cashflowratio_2018q3'] > df['cashflowratio_2018q2']) & (df['cashflowratio_2018q2'] > df['cashflowratio_2018q1'])
     #position_gold = position_gold_2017 & position_gold_2016 | (df['cashflowratio_2017q4'] - df['cashflowratio_2016q4'] > rate)
 
-    position_gold = position_gold_2017 & position_gold_2016 | (df['cashflowratio_2018q2'] - df['cashflowratio_2018q1'] > rate)
+    position_gold = position_gold_2017 & position_gold_2016 | (df['cashflowratio_2018q3'] - df['cashflowratio_2018q2'] > rate)
     df.loc[position_gold[(position_gold == True) & (position_gold.shift() == False)].index, 'cashflowratio_good'] = 1
     df2=df.loc[(df['code']) >0,['code','cashflowratio_good']]
     #df2=df.loc[True,['code','name_x','gross_profit_rate_good']]
@@ -146,7 +154,7 @@ def merge_canslim_c_result():
     df['business_income_good'].astype('float')
     df['cashflowratio_good'].astype('float')
     #在这里计算PEG市盈率相对盈利增长比率
-    df['peg'] = df['pe']/df['nprg_2018q2']
+    df['peg'] = df['pe']/df['nprg_2018q3']
     decimals = pb.Series([2], index=['peg'])
     df.round(decimals)
     df = df.fillna(0)
